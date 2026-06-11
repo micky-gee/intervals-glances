@@ -1,0 +1,9 @@
+bin/
+developer_key.pem
+developer_key.der
+.apikey
+*.prg
+*.iq
+.DS_Store
+*.orig
+.claude/
