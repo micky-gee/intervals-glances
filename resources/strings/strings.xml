@@ -10,4 +10,11 @@
     <string id="SetChart3">Chart 3</string>
     <string id="SetChartRing">Ring chart</string>
     <string id="SetRoundCharts">Round charts</string>
+    <string id="SetGlance">Glance display</string>
+    <string id="SetPageRecovery">Show recovery page</string>
+    <string id="SetPageSleep">Show sleep page</string>
+    <string id="SetPageBody">Show body page</string>
+    <string id="SetPageFuel">Show fuel page</string>
+    <string id="SetPageFeel">Show feel page</string>
+    <string id="SetPageStatus">Show status page</string>
 </strings>

@@ -98,10 +98,10 @@ module IntervalsUi {
             item as Array) as Void {
         var valueColor = item.size() > 4
             ? item[4] as Number : Graphics.COLOR_WHITE;
-        drawValueUnit(dc, cx, cy - 12, item[1] as String, item[2] as String,
-            maxW, 46, valueColor);
+        drawValueUnit(dc, cx, cy - 14, item[1] as String, item[2] as String,
+            maxW, 58, valueColor);
         dc.setColor(item[3] as Number, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, cy + 26, font(17), item[0] as String,
+        dc.drawText(cx, cy + 29, font(19), item[0] as String,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -124,7 +124,7 @@ module IntervalsUi {
             var cx = lastOdd ? w / 2
                 : (i % 2 == 0 ? w * 29 / 100 : w * 71 / 100);
             var cy = top + rowH * r + rowH / 2;
-            drawTile(dc, cx, cy, lastOdd ? 200 : 138, items[i] as Array);
+            drawTile(dc, cx, cy, lastOdd ? 220 : 152, items[i] as Array);
         }
     }
 }

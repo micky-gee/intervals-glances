@@ -92,13 +92,13 @@ class IntervalsWidgetView extends WatchUi.View {
         var colors = [IntervalsCharts.CTL_COLOR, IntervalsCharts.ATL_COLOR,
             Graphics.COLOR_WHITE] as Array<Number>;
 
-        var y = h * 74 / 100;
+        var y = h * 73 / 100;
         for (var i = 0; i < 3; i++) {
             var x = w * (i * 28 + 22) / 100;
-            IntervalsUi.drawFit(dc, x, y, values[i], 110, 36, colors[i],
+            IntervalsUi.drawFit(dc, x, y, values[i], 116, 44, colors[i],
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(IntervalsUi.DIM, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, y + 30, IntervalsUi.font(16), labels[i],
+            dc.drawText(x, y + 34, IntervalsUi.font(18), labels[i],
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
@@ -132,15 +132,15 @@ class IntervalsWidgetView extends WatchUi.View {
         var ly = h * 81 / 100;
         if (wd != null) {
             IntervalsUi.drawFit(dc, w * 26 / 100, ly,
-                "Fit " + IntervalsData.fmt(wd["ctl"], 0), 120, 24,
+                "Fit " + IntervalsData.fmt(wd["ctl"], 0), 130, 30,
                 IntervalsCharts.CTL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             IntervalsUi.drawFit(dc, w * 50 / 100, ly,
-                "Fat " + IntervalsData.fmt(wd["atl"], 0), 120, 24,
+                "Fat " + IntervalsData.fmt(wd["atl"], 0), 130, 30,
                 IntervalsCharts.ATL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             IntervalsUi.drawFit(dc, w * 74 / 100, ly,
-                "Form " + IntervalsData.formText(), 120, 24,
+                "Form " + IntervalsData.formText(), 130, 30,
                 IntervalsData.formZoneColor(),
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -171,12 +171,12 @@ class IntervalsWidgetView extends WatchUi.View {
 
         var wd = IntervalsData.wellness();
         if (wd != null) {
-            IntervalsUi.drawFit(dc, cx - w * 9 / 100, cy + 66,
-                "Fit " + IntervalsData.fmt(wd["ctl"], 0), w * 18 / 100, 18,
+            IntervalsUi.drawFit(dc, cx - w * 12 / 100, cy + 70,
+                "Fit " + IntervalsData.fmt(wd["ctl"], 0), w * 22 / 100, 28,
                 IntervalsCharts.CTL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            IntervalsUi.drawFit(dc, cx + w * 9 / 100, cy + 66,
-                "Fat " + IntervalsData.fmt(wd["atl"], 0), w * 18 / 100, 18,
+            IntervalsUi.drawFit(dc, cx + w * 12 / 100, cy + 70,
+                "Fat " + IntervalsData.fmt(wd["atl"], 0), w * 22 / 100, 28,
                 IntervalsCharts.ATL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -205,7 +205,8 @@ class IntervalsWidgetView extends WatchUi.View {
         }
 
         var ok = IntervalsCharts.drawSeriesChart(dc, values, color,
-            w * 16 / 100, w * 88 / 100, h * 22 / 100, h * 70 / 100);
+            w * 16 / 100, w * 88 / 100, h * 22 / 100, h * 70 / 100,
+            IntervalsCharts.hasBaseline(key));
         if (!ok) {
             dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(w / 2, h / 2, Graphics.FONT_SMALL, "No data in window",
@@ -229,11 +230,11 @@ class IntervalsWidgetView extends WatchUi.View {
         }
         var fmtStr = "%." + dec + "f";
         IntervalsUi.drawFit(dc, w / 2, h * 78 / 100, cur.format(fmtStr),
-            w * 40 / 100, 44, color,
+            w * 40 / 100, 52, color,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, w / 2, h * 86 / 100,
+        IntervalsUi.drawFit(dc, w / 2, h * 87 / 100,
             "min " + minV.format(fmtStr) + "    max " + maxV.format(fmtStr),
-            w * 56 / 100, 18, IntervalsUi.DIM,
+            w * 56 / 100, 20, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -257,7 +258,8 @@ class IntervalsWidgetView extends WatchUi.View {
         }
 
         var ok = IntervalsCharts.drawRingChart(dc, values, color,
-            cx, cy, w * 28 / 100, w * 47 / 100);
+            cx, cy, w * 28 / 100, w * 47 / 100,
+            IntervalsCharts.hasBaseline(key));
         if (!ok) {
             drawHeader(dc, label);
             dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
@@ -280,19 +282,19 @@ class IntervalsWidgetView extends WatchUi.View {
             }
         }
         var fmtStr = "%." + dec + "f";
-        IntervalsUi.drawFit(dc, cx, cy - 56,
+        IntervalsUi.drawFit(dc, cx, cy - 62,
             IntervalsRefresh.isBusy() ? "SYNCING..." : label,
-            w * 40 / 100, 20, color,
+            w * 40 / 100, 22, color,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy - 6, cur.format(fmtStr),
-            w * 44 / 100, 64, Graphics.COLOR_WHITE,
+        IntervalsUi.drawFit(dc, cx, cy - 8, cur.format(fmtStr),
+            w * 44 / 100, 72, Graphics.COLOR_WHITE,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + 44,
+        IntervalsUi.drawFit(dc, cx, cy + 46,
             minV.format(fmtStr) + " - " + maxV.format(fmtStr),
-            w * 40 / 100, 18, IntervalsUi.DIM,
+            w * 40 / 100, 20, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + 70, windowLabel(),
-            w * 30 / 100, 16, IntervalsUi.DIM,
+        IntervalsUi.drawFit(dc, cx, cy + 72, windowLabel(),
+            w * 30 / 100, 17, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -395,7 +397,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.4.0", "", IntervalsUi.SLATE]
+            ["VERSION", "0.5.0", "", IntervalsUi.SLATE]
         ];
     }
 

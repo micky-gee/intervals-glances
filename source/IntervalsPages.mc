@@ -15,12 +15,12 @@ module IntervalsPages {
         if (!rk.equals("off")) {
             p.add("ring:" + rk);
         }
-        p.add("recovery");
-        p.add("sleep");
-        p.add("body");
-        p.add("fuel");
-        p.add("feel");
-        p.add("status");
+        if (IntervalsSettings.pageEnabled("pageRecovery")) { p.add("recovery"); }
+        if (IntervalsSettings.pageEnabled("pageSleep")) { p.add("sleep"); }
+        if (IntervalsSettings.pageEnabled("pageBody")) { p.add("body"); }
+        if (IntervalsSettings.pageEnabled("pageFuel")) { p.add("fuel"); }
+        if (IntervalsSettings.pageEnabled("pageFeel")) { p.add("feel"); }
+        if (IntervalsSettings.pageEnabled("pageStatus")) { p.add("status"); }
         return p;
     }
 

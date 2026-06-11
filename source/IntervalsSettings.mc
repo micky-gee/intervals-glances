@@ -50,6 +50,20 @@ module IntervalsSettings {
         return "off";
     }
 
+    // Glance content: 0 = fit+fat+form, 1 = fitness, 2 = fatigue, 3 = form.
+    function glanceMode() as Number {
+        var v = Application.Properties.getValue("glanceMode");
+        if (v instanceof Lang.Number && v >= 0 && v <= 3) {
+            return v;
+        }
+        return 0;
+    }
+
+    // Per-page visibility toggles ("pageRecovery" etc.), default shown.
+    function pageEnabled(prop as String) as Boolean {
+        return Application.Properties.getValue(prop) != false;
+    }
+
     // Render the load and metric chart pages radially (vs rectangular).
     function roundCharts() as Boolean {
         var v = Application.Properties.getValue("roundCharts");
