@@ -7,7 +7,7 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
 
     // Form-zone band fills, kept in sync with IntervalsCharts.ZONE_FILLS
     // (duplicated so the chart module stays out of the glance memory pool).
-    const FILLS = [0x3A3A57, 0x1D5380, 0x2E2E2E, 0x1E7A45, 0x5C1F26] as Array<Number>;
+    const FILLS = [0x44445C, 0x1F66A3, 0x2E2E2E, 0x1E7A45, 0x4D1A20] as Array<Number>;
     const MULS = [0.80, 0.95, 1.10, 1.30] as Array<Float>;
     const CTL_COLOR = 0x4DA6FF;
     const ATL_COLOR = 0xCC66FF;
@@ -67,12 +67,15 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
             dc.drawText(x1, hy, Graphics.FONT_GLANCE, IntervalsData.ageText(),
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
 
+            // The chart can run nearly to the carousel focus bar; only the
+            // text needs the bigger inset.
             var y0 = h * 34 / 100;
             var y1 = h * 94 / 100;
+            var gx0 = w * 3 / 100;
             if (mode == 3) {
-                drawMiniForm(dc, ctl, atl, x0, x1, y0, y1);
+                drawMiniForm(dc, ctl, atl, gx0, x1, y0, y1);
             } else {
-                drawMiniLoad(dc, ctl, atl, mode, x0, x1, y0, y1);
+                drawMiniLoad(dc, ctl, atl, mode, gx0, x1, y0, y1);
             }
             return;
         }

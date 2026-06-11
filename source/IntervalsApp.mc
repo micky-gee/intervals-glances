@@ -33,6 +33,12 @@ class IntervalsApp extends Application.AppBase {
         return [new IntervalsWidgetView(0), new IntervalsPageDelegate(0)];
     }
 
+    // Repaint when settings arrive from the phone, so glance mode and page
+    // toggles apply without relaunching.
+    function onSettingsChanged() as Void {
+        WatchUi.requestUpdate();
+    }
+
     // Data handed back by the background service via Background.exit().
     function onBackgroundData(data) {
         if (data instanceof Lang.Dictionary) {

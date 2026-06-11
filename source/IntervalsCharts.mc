@@ -10,11 +10,11 @@ module IntervalsCharts {
     // multiples of that day's CTL (atl = ctl * (1 - form%/100)).
     const ZONE_MULS = [0.80, 0.95, 1.10, 1.30] as Array<Float>;
     const ZONE_FILLS = [
-        0x3A3A57,   // transition (form > +20%): slate
-        0x1D5380,   // fresh (+5..+20%): clear blue
+        0x44445C,   // transition (form > +20%): slate
+        0x1F66A3,   // fresh (+5..+20%): unmistakable blue
         0x2E2E2E,   // grey zone (-10..+5%)
         0x1E7A45,   // optimal (-30..-10%): clear green
-        0x5C1F26    // high risk (< -30%): deep red
+        0x4D1A20    // high risk (< -30%): deep red, not neon
     ] as Array<Number>;
 
     const CTL_COLOR = 0x4DA6FF;

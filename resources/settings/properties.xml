@@ -10,6 +10,7 @@
     <property id="chart2" type="number">5</property>
     <property id="chart3" type="number">6</property>
     <property id="chartRing" type="number">13</property>
+    <property id="pageForm" type="boolean">true</property>
     <property id="pageRecovery" type="boolean">true</property>
     <property id="pageSleep" type="boolean">true</property>
     <property id="pageBody" type="boolean">true</property>

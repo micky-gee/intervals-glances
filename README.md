@@ -87,11 +87,13 @@ watch; the glance appears in the carousel.
 |---|---|---|
 | intervals.icu API key | – | from intervals.icu Developer Settings |
 | Athlete ID | `0` | `0` = the key's owner; coaches can use `i12345` IDs |
+| Glance display | fit+fat+form | or fitness / fatigue / form only |
 | Show form as % of fitness | off | matches the intervals.icu zone scale |
 | Round charts | on | polar load chart + ring metric charts |
 | Chart window | 3 months | 6 weeks / 3 months / 6 months |
 | Chart 1–3 | HRV, ramp rate, eFTP | line/ring chart slots |
 | Ring chart | steps | dedicated radial bar chart |
+| Show … page | all on | hide form / recovery / sleep / body / fuel / feel / status |
 
 ## Simulator
 

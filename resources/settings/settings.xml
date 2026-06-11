@@ -115,6 +115,9 @@
             <listEntry value="17">Calories</listEntry>
         </settingConfig>
     </setting>
+    <setting propertyKey="@Properties.pageForm" title="@Strings.SetPageForm">
+        <settingConfig type="boolean"/>
+    </setting>
     <setting propertyKey="@Properties.pageRecovery" title="@Strings.SetPageRecovery">
         <settingConfig type="boolean"/>
     </setting>

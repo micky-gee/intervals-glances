@@ -4,7 +4,10 @@ import Toybox.Lang;
 module IntervalsPages {
 
     function list() as Array {
-        var p = ["form", "load"];
+        // The load page is always present so the list can never be empty.
+        var p = [];
+        if (IntervalsSettings.pageEnabled("pageForm")) { p.add("form"); }
+        p.add("load");
         for (var i = 1; i <= IntervalsApi.CHART_SLOTS; i++) {
             var k = IntervalsSettings.chartField(i);
             if (!k.equals("off") && p.indexOf("chart:" + k) < 0) {
