@@ -76,7 +76,7 @@ module IntervalsUi {
         var hasUnit = unit.length() > 0;
         var s = fitSize(dc, value, hasUnit ? maxW * 3 / 4 : maxW, start);
         var f = font(s);
-        var us = s / 2 < 16 ? 16 : s / 2;
+        var us = s / 2 < 18 ? 18 : s / 2;
         var uf = font(us);
         var wv = dc.getTextWidthInPixels(value, f);
         var wu = hasUnit ? dc.getTextWidthInPixels(unit, uf) + 5 : 0;
@@ -98,10 +98,10 @@ module IntervalsUi {
             item as Array) as Void {
         var valueColor = item.size() > 4
             ? item[4] as Number : Graphics.COLOR_WHITE;
-        drawValueUnit(dc, cx, cy - 14, item[1] as String, item[2] as String,
-            maxW, 58, valueColor);
+        drawValueUnit(dc, cx, cy - 16, item[1] as String, item[2] as String,
+            maxW, 68, valueColor);
         dc.setColor(item[3] as Number, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, cy + 29, font(19), item[0] as String,
+        dc.drawText(cx, cy + 33, font(22), item[0] as String,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -124,7 +124,7 @@ module IntervalsUi {
             var cx = lastOdd ? w / 2
                 : (i % 2 == 0 ? w * 29 / 100 : w * 71 / 100);
             var cy = top + rowH * r + rowH / 2;
-            drawTile(dc, cx, cy, lastOdd ? 220 : 152, items[i] as Array);
+            drawTile(dc, cx, cy, lastOdd ? 230 : 160, items[i] as Array);
         }
     }
 }

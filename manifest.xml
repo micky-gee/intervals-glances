@@ -6,7 +6,7 @@
                     name="@Strings.AppName"
                     type="widget"
                     minApiLevel="5.0.0"
-                    version="0.6.0">
+                    version="0.6.1">
         <iq:products>
             <iq:product id="fenix8pro47mm"/>
         </iq:products>

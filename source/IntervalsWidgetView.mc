@@ -73,10 +73,10 @@ class IntervalsWidgetView extends WatchUi.View {
         // Hero number, auto-fitted, in the zone color.
         var zone = IntervalsData.formZoneColor();
         IntervalsUi.drawFit(dc, cx, h * 38 / 100, IntervalsData.formText(),
-            w * 56 / 100, 132, zone,
+            w * 60 / 100, 140, zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, h * 56 / 100, IntervalsData.formZoneLabel(),
-            w * 50 / 100, 28, zone,
+        IntervalsUi.drawFit(dc, cx, h * 57 / 100, IntervalsData.formZoneLabel(),
+            w * 54 / 100, 34, zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // Mini tiles for the load numbers.
@@ -92,13 +92,13 @@ class IntervalsWidgetView extends WatchUi.View {
         var colors = [IntervalsCharts.CTL_COLOR, IntervalsCharts.ATL_COLOR,
             Graphics.COLOR_WHITE] as Array<Number>;
 
-        var y = h * 73 / 100;
+        var y = h * 72 / 100;
         for (var i = 0; i < 3; i++) {
             var x = w * (i * 28 + 22) / 100;
-            IntervalsUi.drawFit(dc, x, y, values[i], 116, 44, colors[i],
+            IntervalsUi.drawFit(dc, x, y, values[i], 122, 50, colors[i],
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(IntervalsUi.DIM, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, y + 34, IntervalsUi.font(18), labels[i],
+            dc.drawText(x, y + 38, IntervalsUi.font(20), labels[i],
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
@@ -132,15 +132,15 @@ class IntervalsWidgetView extends WatchUi.View {
         var ly = h * 81 / 100;
         if (wd != null) {
             IntervalsUi.drawFit(dc, w * 26 / 100, ly,
-                "Fit " + IntervalsData.fmt(wd["ctl"], 0), 130, 30,
+                "Fit " + IntervalsData.fmt(wd["ctl"], 0), 136, 34,
                 IntervalsCharts.CTL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             IntervalsUi.drawFit(dc, w * 50 / 100, ly,
-                "Fat " + IntervalsData.fmt(wd["atl"], 0), 130, 30,
+                "Fat " + IntervalsData.fmt(wd["atl"], 0), 136, 34,
                 IntervalsCharts.ATL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             IntervalsUi.drawFit(dc, w * 74 / 100, ly,
-                "Form " + IntervalsData.formText(), 130, 30,
+                "Form " + IntervalsData.formText(), 136, 34,
                 IntervalsData.formZoneColor(),
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -158,25 +158,25 @@ class IntervalsWidgetView extends WatchUi.View {
             cx, cy, w * 28 / 100, w * 47 / 100);
 
         var zone = IntervalsData.formZoneColor();
-        IntervalsUi.drawFit(dc, cx, cy - 74,
+        IntervalsUi.drawFit(dc, cx, cy - 78,
             IntervalsRefresh.isBusy() ? "SYNCING..." : "LOAD " + windowLabel(),
-            w * 42 / 100, 22, IntervalsUi.DIM,
+            w * 42 / 100, 24, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         IntervalsUi.drawFit(dc, cx, cy - 14, IntervalsData.formText(),
-            w * 44 / 100, 76, zone,
+            w * 46 / 100, 86, zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + 40, IntervalsData.formZoneLabel(),
-            w * 42 / 100, 24, zone,
+        IntervalsUi.drawFit(dc, cx, cy + 44, IntervalsData.formZoneLabel(),
+            w * 42 / 100, 28, zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         var wd = IntervalsData.wellness();
         if (wd != null) {
-            IntervalsUi.drawFit(dc, cx - w * 12 / 100, cy + 76,
-                "Fit " + IntervalsData.fmt(wd["ctl"], 0), w * 22 / 100, 32,
+            IntervalsUi.drawFit(dc, cx - w * 11 / 100, cy + 80,
+                "Fit " + IntervalsData.fmt(wd["ctl"], 0), w * 20 / 100, 34,
                 IntervalsCharts.CTL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            IntervalsUi.drawFit(dc, cx + w * 12 / 100, cy + 76,
-                "Fat " + IntervalsData.fmt(wd["atl"], 0), w * 22 / 100, 32,
+            IntervalsUi.drawFit(dc, cx + w * 11 / 100, cy + 80,
+                "Fat " + IntervalsData.fmt(wd["atl"], 0), w * 20 / 100, 34,
                 IntervalsCharts.ATL_COLOR,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -229,12 +229,12 @@ class IntervalsWidgetView extends WatchUi.View {
             }
         }
         var fmtStr = "%." + dec + "f";
-        IntervalsUi.drawFit(dc, w / 2, h * 78 / 100, cur.format(fmtStr),
-            w * 40 / 100, 52, color,
+        IntervalsUi.drawFit(dc, w / 2, h * 77 / 100, cur.format(fmtStr),
+            w * 42 / 100, 60, color,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         IntervalsUi.drawFit(dc, w / 2, h * 87 / 100,
             "min " + minV.format(fmtStr) + "    max " + maxV.format(fmtStr),
-            w * 56 / 100, 20, IntervalsUi.DIM,
+            w * 58 / 100, 24, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -282,19 +282,19 @@ class IntervalsWidgetView extends WatchUi.View {
             }
         }
         var fmtStr = "%." + dec + "f";
-        IntervalsUi.drawFit(dc, cx, cy - 74,
+        IntervalsUi.drawFit(dc, cx, cy - 78,
             IntervalsRefresh.isBusy() ? "SYNCING..." : label,
-            w * 42 / 100, 26, color,
+            w * 42 / 100, 28, color,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy - 10, cur.format(fmtStr),
-            w * 48 / 100, 88, Graphics.COLOR_WHITE,
+        IntervalsUi.drawFit(dc, cx, cy - 8, cur.format(fmtStr),
+            w * 50 / 100, 100, Graphics.COLOR_WHITE,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + 52,
+        IntervalsUi.drawFit(dc, cx, cy + 56,
             minV.format(fmtStr) + " - " + maxV.format(fmtStr),
-            w * 42 / 100, 24, IntervalsUi.DIM,
+            w * 42 / 100, 26, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + 80, windowLabel(),
-            w * 30 / 100, 20, IntervalsUi.DIM,
+        IntervalsUi.drawFit(dc, cx, cy + 84, windowLabel(),
+            w * 30 / 100, 22, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -397,7 +397,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.6.0", "", IntervalsUi.SLATE]
+            ["VERSION", "0.6.1", "", IntervalsUi.SLATE]
         ];
     }
 
@@ -437,7 +437,7 @@ class IntervalsWidgetView extends WatchUi.View {
     hidden function drawHeader(dc as Dc, title as String) as Void {
         IntervalsUi.drawFit(dc, dc.getWidth() / 2, dc.getHeight() * 11 / 100,
             IntervalsRefresh.isBusy() ? "SYNCING..." : title,
-            dc.getWidth() * 60 / 100, 22, 0x55AAFF,
+            dc.getWidth() * 62 / 100, 26, 0x55AAFF,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
