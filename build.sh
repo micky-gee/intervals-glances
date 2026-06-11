@@ -34,6 +34,17 @@ if [ ! -f "$KEY" ]; then
     openssl pkcs8 -topk8 -inform PEM -outform DER -in developer_key.pem -out "$KEY" -nocrypt
 fi
 
+# Store upload package (.iq for apps.garmin.com). The personal .apikey is
+# deliberately NOT baked in - store users enter their own key in settings.
+if [ "$1" = "--export" ]; then
+    mkdir -p bin
+    "$SDK/bin/monkeyc" -e -f monkey.jungle -y "$KEY" -o bin/intervals-widget.iq -r -w
+    echo ""
+    echo "Built bin/intervals-widget.iq (no API key baked in)."
+    echo "Upload as a Beta app at https://apps.garmin.com/developer/dashboard"
+    exit 0
+fi
+
 RELEASE=""
 if [ "$1" = "--release" ]; then
     RELEASE="-r"

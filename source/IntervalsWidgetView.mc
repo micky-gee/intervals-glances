@@ -395,7 +395,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.3.0", "", IntervalsUi.SLATE]
+            ["VERSION", "0.4.0", "", IntervalsUi.SLATE]
         ];
     }
 

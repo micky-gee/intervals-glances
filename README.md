@@ -21,8 +21,9 @@ More: [eFTP](docs/screenshots/05-eftp-ring.png) ·
 
 ## Features
 
-- **Glance** — Form (colored by intervals.icu form zone), Fitness (CTL),
-  Fatigue (ATL), and data age, right in the widget carousel.
+- **Glance** — a compact banded CTL/ATL chart (the form-zone colors at a
+  glance) with the current form value and data age, right in the widget
+  carousel.
 - **Form page** — big TSB value with zone label, plus Fitness / Fatigue /
   Ramp rate.
 - **Polar load chart** — CTL and ATL wrapped around the bezel over the
