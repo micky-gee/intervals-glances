@@ -55,7 +55,7 @@ module IntervalsUi {
     // Largest size <= start whose rendered width fits maxW.
     function fitSize(dc as Dc, text as String, maxW as Number, start as Number) as Number {
         var s = start;
-        while (s > 14 && dc.getTextWidthInPixels(text, font(s)) > maxW) {
+        while (s > 10 && dc.getTextWidthInPixels(text, font(s)) > maxW) {
             s -= 2;
         }
         return s;
@@ -76,7 +76,9 @@ module IntervalsUi {
         var hasUnit = unit.length() > 0;
         var s = fitSize(dc, value, hasUnit ? maxW * 3 / 4 : maxW, start);
         var f = font(s);
-        var us = s / 2 < 18 ? 18 : s / 2;
+        var uMin = dc.getWidth() * 4 / 100;
+        if (uMin < 12) { uMin = 12; }
+        var us = s / 2 < uMin ? uMin : s / 2;
         var uf = font(us);
         var wv = dc.getTextWidthInPixels(value, f);
         var wu = hasUnit ? dc.getTextWidthInPixels(unit, uf) + 5 : 0;
@@ -94,14 +96,18 @@ module IntervalsUi {
     // One stat tile: auto-fitted value (+unit) with a colored micro-label.
     // item = [label, value, unit, accent] or
     //        [label, value, unit, accent, valueColor]
+    // Sizes are fractions of screen width so the same layout holds from
+    // 218px MIP faces up to the 454px MicroLED (fractions calibrated to
+    // reproduce the tuned 454px look exactly).
     function drawTile(dc as Dc, cx as Number, cy as Number, maxW as Number,
             item as Array) as Void {
+        var w = dc.getWidth();
         var valueColor = item.size() > 4
             ? item[4] as Number : Graphics.COLOR_WHITE;
-        drawValueUnit(dc, cx, cy - 16, item[1] as String, item[2] as String,
-            maxW, 68, valueColor);
+        drawValueUnit(dc, cx, cy - w * 35 / 1000, item[1] as String,
+            item[2] as String, maxW, w * 15 / 100, valueColor);
         dc.setColor(item[3] as Number, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, cy + 33, font(22), item[0] as String,
+        dc.drawText(cx, cy + w * 73 / 1000, font(w * 48 / 1000), item[0] as String,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -124,7 +130,8 @@ module IntervalsUi {
             var cx = lastOdd ? w / 2
                 : (i % 2 == 0 ? w * 29 / 100 : w * 71 / 100);
             var cy = top + rowH * r + rowH / 2;
-            drawTile(dc, cx, cy, lastOdd ? 230 : 160, items[i] as Array);
+            drawTile(dc, cx, cy, lastOdd ? w * 50 / 100 : w * 35 / 100,
+                items[i] as Array);
         }
     }
 }

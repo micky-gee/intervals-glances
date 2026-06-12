@@ -127,7 +127,7 @@ module IntervalsCharts {
             dc.setColor(0x4D4D4D, Graphics.COLOR_TRANSPARENT);
             dc.drawLine(x0, gy, x1, gy);
             dc.setColor(0x808080, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x0 - 6, gy, IntervalsUi.font(15), gv.format("%d"),
+            dc.drawText(x0 - 6, gy, IntervalsUi.font(dc.getWidth() * 33 / 1000), gv.format("%d"),
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
             gv += step;
         }
@@ -331,7 +331,7 @@ module IntervalsCharts {
             var ly = cy + r;
             if (ly < cy * 2 - 28) {
                 dc.setColor(0x808080, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, ly, IntervalsUi.font(15), gv.format("%d"),
+                dc.drawText(cx, ly, IntervalsUi.font(dc.getWidth() * 33 / 1000), gv.format("%d"),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             }
             gv += step;

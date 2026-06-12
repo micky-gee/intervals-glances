@@ -1,9 +1,12 @@
-# Intervals — an intervals.icu widget for the Garmin Fenix 8 Pro
+# Intervals — an intervals.icu widget for Garmin watches
 
 A Connect IQ **widget with a glance** that brings your
-[intervals.icu](https://intervals.icu) fitness data to the Fenix 8 Pro family
-(47mm / 51mm / **MicroLED** — they all share the Connect IQ device ID
-`fenix8pro47mm`, 454×454 round, API level 6.0).
+[intervals.icu](https://intervals.icu) fitness data to round-screen Garmin
+watches. Built for and tuned on the Fenix 8 Pro MicroLED (`fenix8pro47mm`,
+454×454, API 6.0); supports 59 device IDs across the Fenix 7/8, Epix 2,
+Forerunner, Venu, MARQ 2, Descent, Approach and Instinct 3 AMOLED families
+(layouts scale with screen size; MIP models render the chart palette with
+fewer colors).
 
 | Glance | Form | Load (polar) |
 |---|---|---|
@@ -59,8 +62,12 @@ More: [eFTP](docs/screenshots/05-eftp-ring.png) ·
 ## Build
 
 ```sh
-./build.sh            # debug build -> bin/intervals-widget.prg
+./build.sh                  # debug build -> bin/intervals-widget.prg
 ./build.sh --release
+DEVICE=fr955 ./build.sh     # debug build for another supported device
+./build.sh --export         # beta store package (beta app ID)
+./build.sh --export-prod    # production store package (its own app ID,
+                            # since each store listing needs a unique one)
 ```
 
 The script locates the SDK (Homebrew cask or SDK Manager install), generates

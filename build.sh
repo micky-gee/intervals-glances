@@ -11,7 +11,7 @@ if [ -x /opt/homebrew/opt/openjdk/bin/java ]; then
     export JAVA_HOME=/opt/homebrew/opt/openjdk
 fi
 
-DEVICE=fenix8pro47mm
+DEVICE=${DEVICE:-fenix8pro47mm}
 OUT=bin/intervals-widget.prg
 KEY=developer_key.der
 
@@ -34,14 +34,32 @@ if [ ! -f "$KEY" ]; then
     openssl pkcs8 -topk8 -inform PEM -outform DER -in developer_key.pem -out "$KEY" -nocrypt
 fi
 
-# Store upload package (.iq for apps.garmin.com). The personal .apikey is
+# Store upload packages (.iq for apps.garmin.com). The personal .apikey is
 # deliberately NOT baked in - store users enter their own key in settings.
-if [ "$1" = "--export" ]; then
+#
+#   --export        beta channel (manifest's app ID)
+#   --export-prod   production channel: a store listing needs its own app ID,
+#                   distinct from the beta listing's, so the prod build swaps
+#                   in PROD_ID. Keep PROD_ID stable across releases.
+PROD_ID="45d6851e2d794d53afd7ab6656adab9d"
+if [ "$1" = "--export" ] || [ "$1" = "--export-prod" ]; then
     mkdir -p bin
-    "$SDK/bin/monkeyc" -e -f monkey.jungle -y "$KEY" -o bin/intervals-widget.iq -r -w
+    OUT_IQ=bin/intervals-widget-beta.iq
+    if [ "$1" = "--export-prod" ]; then
+        OUT_IQ=bin/intervals-widget-prod.iq
+        cp manifest.xml manifest.xml.orig
+        restore_manifest() {
+            if [ -f manifest.xml.orig ]; then
+                mv manifest.xml.orig manifest.xml
+            fi
+        }
+        trap restore_manifest EXIT
+        sed -i '' "s/iq:application id=\"[0-9a-f]*\"/iq:application id=\"$PROD_ID\"/" manifest.xml
+    fi
+    "$SDK/bin/monkeyc" -e -f monkey.jungle -y "$KEY" -o "$OUT_IQ" -r -w
     echo ""
-    echo "Built bin/intervals-widget.iq (no API key baked in)."
-    echo "Upload as a Beta app at https://apps.garmin.com/developer/dashboard"
+    echo "Built $OUT_IQ (no API key baked in)."
+    echo "Upload at https://apps.garmin.com/developer/dashboard"
     exit 0
 fi
 
