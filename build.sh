@@ -68,18 +68,48 @@ if [ "$1" = "--release" ]; then
     RELEASE="-r"
 fi
 
-# Personal builds: if a .apikey file exists (gitignored), bake it in as the
-# apiKey property default so the sideloaded app needs no configuration.
+# API key baking (sideloaded builds have no settings UI, so the key must be
+# compiled in): the APIKEY env var wins, else the gitignored .apikey file.
 PROPS=resources/settings/properties.xml
 restore_props() {
     if [ -f "$PROPS.orig" ]; then
         mv "$PROPS.orig" "$PROPS"
     fi
 }
-if [ -f .apikey ]; then
+inject_key() {
     cp "$PROPS" "$PROPS.orig"
     trap restore_props EXIT
-    sed -i '' "s|<property id=\"apiKey\" type=\"string\">[^<]*</property>|<property id=\"apiKey\" type=\"string\">$(cat .apikey)</property>|" "$PROPS"
+    sed -i '' "s|<property id=\"apiKey\" type=\"string\">[^<]*</property>|<property id=\"apiKey\" type=\"string\">$1</property>|" "$PROPS"
+}
+
+# Sideload distribution: one release .prg per manifest device, in dist/.
+# Keyless by default (safe to publish); pass APIKEY=... for a per-tester
+# keyed batch. The personal .apikey file is intentionally ignored here so
+# it can never leak into distributed artifacts.
+if [ "$1" = "--all" ]; then
+    if [ -n "$APIKEY" ]; then
+        echo "Baking provided APIKEY into all builds (do NOT publish these)."
+        inject_key "$APIKEY"
+    else
+        echo "Building keyless .prgs (testers need a keyed build or the store version to sync)."
+    fi
+    mkdir -p dist
+    rm -f dist/*.prg
+    for d in $(grep -o 'product id="[a-z0-9]*"' manifest.xml | sed 's/.*id="//;s/"$//'); do
+        out=$("$SDK/bin/monkeyc" -f monkey.jungle -d "$d" -o "dist/intervals-widget-$d.prg" -y "$KEY" -r 2>&1) \
+            || { echo "FAIL $d"; echo "$out" | grep -m2 ERROR; exit 1; }
+        echo "  $d"
+    done
+    echo "Built $(ls dist/*.prg | wc -l | tr -d ' ') device builds in dist/"
+    exit 0
+fi
+
+KEYVAL="${APIKEY:-}"
+if [ -z "$KEYVAL" ] && [ -f .apikey ]; then
+    KEYVAL=$(cat .apikey)
+fi
+if [ -n "$KEYVAL" ]; then
+    inject_key "$KEYVAL"
 fi
 
 mkdir -p bin

@@ -7,3 +7,4 @@ developer_key.der
 .DS_Store
 *.orig
 .claude/
+dist/
