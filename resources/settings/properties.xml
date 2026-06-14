@@ -5,7 +5,6 @@
     <property id="glanceMode" type="number">0</property>
     <property id="formAsPercent" type="boolean">false</property>
     <property id="roundCharts" type="boolean">true</property>
-    <property id="windowDays" type="number">90</property>
     <property id="chart1" type="number">1</property>
     <property id="chart2" type="number">5</property>
     <property id="chart3" type="number">6</property>

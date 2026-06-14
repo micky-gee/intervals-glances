@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.0 — 2026-06-14
+
+- Interactive chart zoom: START opens a zoom control on the chart pages with
+  bold +/- glyphs beside the UP/DOWN buttons. UP/+ zooms in (fewer days),
+  DOWN/- zooms out (more days), 7–90 days in stops (7/14/21/30/42/60/90);
+  touch taps the upper/lower half. The trend is always fetched at 90 days and
+  the zoom slices it for display, so rescaling is instant and offline.
+  Replaces the old fixed "Chart window" setting.
+- Line charts interpolate with an adaptive Catmull-Rom spline, so narrow
+  windows render a smooth curve through the daily points instead of an
+  angular polygon; wide windows stay effectively straight at no cost.
+- HRV charts draw each day's bar from the centre of the baseline (green) band
+  to its value, reading as a deviation from the personal baseline.
+
 ## v0.7.0 — 2026-06-12
 
 - Device support expanded from the Fenix 8 Pro to **59 round, glance-capable

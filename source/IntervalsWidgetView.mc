@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
@@ -46,13 +47,52 @@ class IntervalsWidgetView extends WatchUi.View {
             drawTilesPage(dc, "STATUS", statusItems());
         }
 
-        drawPageDots(dc, pages.size());
+        if (IntervalsRefresh.zoomActive && IntervalsPages.isChart(id)) {
+            drawZoomOverlay(dc);
+        } else {
+            drawPageDots(dc, pages.size());
+        }
+    }
+
+    // START opens this on chart pages: bold white +/- glyphs sitting next to
+    // the physical UP and DOWN buttons (which adjust the window). UP/+ zooms
+    // in (fewer days), DOWN/- zooms out (more days); the chart behind rescales
+    // live and the day count rides in the header / ring centre. Button
+    // heights are from the fenix 8 key map (UP ~50%, DOWN ~83% of the screen).
+    hidden function drawZoomOverlay(dc as Dc) as Void {
+        var days = IntervalsData.zoomDays();
+        drawZoomGlyph(dc, dc.getHeight() * 50 / 100, true,
+            days <= IntervalsData.MIN_ZOOM);
+        drawZoomGlyph(dc, dc.getHeight() * 83 / 100, false,
+            days >= IntervalsData.MAX_ZOOM);
+    }
+
+    // One +/- glyph as bold rounded bars, tucked just inside the round screen
+    // edge at the given height so it hugs its button without clipping.
+    hidden function drawZoomGlyph(dc as Dc, cy as Number, isPlus as Boolean,
+            dim as Boolean) as Void {
+        var w = dc.getWidth();
+        var h = dc.getHeight();
+        var half = w * 5 / 100;
+        var thick = w * 22 / 1000;
+        // Left edge of the (round) screen at this height, so the glyph never
+        // lands in the bezel where the display curves in.
+        var rr = w / 2;
+        var dy = cy - h / 2;
+        var inside = rr * rr - dy * dy;
+        var edge = inside > 0 ? (rr - Math.sqrt(inside)).toNumber() : 0;
+        var cx = edge + half + w * 3 / 100;
+
+        dc.setColor(dim ? IntervalsUi.DIM : Graphics.COLOR_WHITE,
+            Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(cx - half, cy - thick / 2, 2 * half, thick, thick / 2);
+        if (isPlus) {
+            dc.fillRoundedRectangle(cx - thick / 2, cy - half, thick, 2 * half, thick / 2);
+        }
     }
 
     hidden function windowLabel() as String {
-        var d = IntervalsData.data();
-        var wd = d != null && d["wd"] != null ? d["wd"] : IntervalsSettings.windowDays();
-        return wd.toString() + "d";
+        return IntervalsData.zoomDays().toString() + "d";
     }
 
     // ---- page 0: form / fitness / fatigue -------------------------------
@@ -109,8 +149,8 @@ class IntervalsWidgetView extends WatchUi.View {
         var w = dc.getWidth();
         var h = dc.getHeight();
 
-        var ctl = IntervalsData.series("ctl");
-        var atl = IntervalsData.series("atl");
+        var ctl = IntervalsData.seriesZoomed("ctl");
+        var atl = IntervalsData.seriesZoomed("atl");
         if (ctl == null || atl == null) {
             drawHeader(dc, "LOAD " + windowLabel());
             drawEmptyState(dc);
@@ -198,7 +238,7 @@ class IntervalsWidgetView extends WatchUi.View {
 
         drawHeader(dc, label + " " + windowLabel());
 
-        var values = IntervalsData.series(key);
+        var values = IntervalsData.seriesZoomed(key);
         if (values == null) {
             drawEmptyState(dc);
             return;
@@ -250,7 +290,7 @@ class IntervalsWidgetView extends WatchUi.View {
         var dec = def[1] as Number;
         var color = def[2] as Number;
 
-        var values = IntervalsData.series(key);
+        var values = IntervalsData.seriesZoomed(key);
         if (values == null) {
             drawHeader(dc, label);
             drawEmptyState(dc);
@@ -397,7 +437,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.7.0", "", IntervalsUi.SLATE]
+            ["VERSION", "0.8.0", "", IntervalsUi.SLATE]
         ];
     }
 

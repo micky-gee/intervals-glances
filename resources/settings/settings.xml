@@ -20,13 +20,6 @@
     <setting propertyKey="@Properties.roundCharts" title="@Strings.SetRoundCharts">
         <settingConfig type="boolean"/>
     </setting>
-    <setting propertyKey="@Properties.windowDays" title="@Strings.SetWindow">
-        <settingConfig type="list">
-            <listEntry value="42">6 weeks</listEntry>
-            <listEntry value="90">3 months</listEntry>
-            <listEntry value="180">6 months</listEntry>
-        </settingConfig>
-    </setting>
     <setting propertyKey="@Properties.chart1" title="@Strings.SetChart1">
         <settingConfig type="list">
             <listEntry value="0">Off</listEntry>

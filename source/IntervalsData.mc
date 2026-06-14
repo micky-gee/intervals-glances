@@ -25,6 +25,7 @@ module IntervalsData {
     }
 
     // Trend series array for a key ("ctl", "atl", or a chart metric).
+    // Holds up to MAX_ZOOM days, oldest..newest.
     function series(key as String) as Array? {
         var d = data();
         if (d != null && d["s"] instanceof Lang.Dictionary) {
@@ -34,6 +35,64 @@ module IntervalsData {
             }
         }
         return null;
+    }
+
+    // ---- interactive zoom (display window, 7..90 days) -------------------
+    // The data is always fetched at MAX_ZOOM; the zoom level just chooses how
+    // many of the most recent days the chart pages display, so changing it is
+    // instant and works offline. Persisted in Storage; MAX_ZOOM must match
+    // IntervalsApi.MAX_DAYS.
+    const MIN_ZOOM = 7;
+    const MAX_ZOOM = 90;
+    const ZOOM_STOPS = [7, 14, 21, 30, 42, 60, 90] as Array<Number>;
+
+    function zoomDays() as Number {
+        var v = Storage.getValue("zoom");
+        if (v instanceof Lang.Number && v >= MIN_ZOOM && v <= MAX_ZOOM) {
+            return v;
+        }
+        return MAX_ZOOM;
+    }
+
+    // Step to the next stop with more days (zoom out); returns true if moved.
+    function zoomOut() as Boolean {
+        var cur = zoomDays();
+        for (var i = 0; i < ZOOM_STOPS.size(); i++) {
+            if (ZOOM_STOPS[i] > cur) {
+                Storage.setValue("zoom", ZOOM_STOPS[i]);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Step to the next stop with fewer days (zoom in); returns true if moved.
+    function zoomIn() as Boolean {
+        var cur = zoomDays();
+        for (var i = ZOOM_STOPS.size() - 1; i >= 0; i--) {
+            if (ZOOM_STOPS[i] < cur) {
+                Storage.setValue("zoom", ZOOM_STOPS[i]);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // The most recent zoomDays() samples of a series (oldest..newest).
+    function seriesZoomed(key as String) as Array? {
+        var s = series(key);
+        if (s == null) {
+            return null;
+        }
+        var z = zoomDays();
+        if (s.size() <= z) {
+            return s;
+        }
+        var out = [];
+        for (var i = s.size() - z; i < s.size(); i++) {
+            out.add(s[i]);
+        }
+        return out;
     }
 
     function lastError() as String? {

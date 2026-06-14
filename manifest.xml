@@ -6,7 +6,7 @@
                     name="@Strings.AppName"
                     type="widget"
                     minApiLevel="5.0.0"
-                    version="0.7.0">
+                    version="0.8.0">
         <iq:products>
             <iq:product id="approachs50"/>
             <iq:product id="approachs7042mm"/>

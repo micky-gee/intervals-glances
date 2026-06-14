@@ -30,4 +30,14 @@ module IntervalsPages {
     function count() as Number {
         return list().size();
     }
+
+    function idAt(page as Number) as String {
+        var l = list();
+        return l[page < l.size() ? page : 0];
+    }
+
+    // Time-series pages that the zoom control applies to.
+    function isChart(id as String) as Boolean {
+        return id.equals("load") || id.find("chart:") == 0 || id.find("ring:") == 0;
+    }
 }

@@ -11,6 +11,11 @@ module IntervalsApi {
 
     const RECENT_DAYS = 7;
 
+    // The trend window is always fetched at its maximum so the interactive
+    // zoom (7..90 days) can rescale instantly from cached data without a
+    // refetch. Must match IntervalsData.MAX_ZOOM.
+    const MAX_DAYS = 90;
+
     // Wellness fields shown on the metric pages. Asking the server to filter
     // keeps the JSON small enough for the background memory pool.
     const FIELDS_RECENT =
@@ -106,7 +111,7 @@ module IntervalsApi {
     // oldest chunk first) so no single response trips the watch's
     // makeWebRequest size limit (error -402).
     function trendChunks() as Array {
-        var days = IntervalsSettings.windowDays();
+        var days = MAX_DAYS;
         var today = Time.today();
         var chunks = [];
         var start = -(days - 1);

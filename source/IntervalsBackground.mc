@@ -48,7 +48,7 @@ class IntervalsServiceDelegate extends System.ServiceDelegate {
         var out = {
             "ts" => Time.now().value(),
             "w" => _summary,
-            "wd" => IntervalsSettings.windowDays()
+            "wd" => IntervalsApi.MAX_DAYS
         };
         if (series != null) {
             out["s"] = series;

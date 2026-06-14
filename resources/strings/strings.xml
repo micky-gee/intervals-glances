@@ -4,7 +4,6 @@
     <string id="SetApiKey">intervals.icu API key</string>
     <string id="SetAthleteId">Athlete ID (0 = me)</string>
     <string id="SetFormPct">Show form as % of fitness</string>
-    <string id="SetWindow">Chart window</string>
     <string id="SetChart1">Chart 1</string>
     <string id="SetChart2">Chart 2</string>
     <string id="SetChart3">Chart 3</string>

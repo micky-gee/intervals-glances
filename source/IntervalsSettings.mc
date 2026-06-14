@@ -26,14 +26,6 @@ module IntervalsSettings {
         return v == true;
     }
 
-    function windowDays() as Number {
-        var v = asNumber(Application.Properties.getValue("windowDays"));
-        if (v != null && v >= 14 && v <= 365) {
-            return v;
-        }
-        return 90;
-    }
-
     // Index order must match the chart list entries in settings.xml.
     const CHART_KEYS = [
         "off", "hrv", "hrvSDNN", "restingHR", "avgSleepingHR", "rampRate",

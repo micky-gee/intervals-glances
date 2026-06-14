@@ -13,6 +13,11 @@ module IntervalsRefresh {
     var _fetcher as Fetcher? = null;
     var _lastAttempt as Number = 0;
 
+    // Transient: whether the START-triggered zoom overlay is showing. Lives
+    // here (a foreground-only module) so the view and delegate share it
+    // without pulling anything into glance scope.
+    var zoomActive as Boolean = false;
+
     function isBusy() as Boolean {
         return _fetcher != null && _fetcher.busy;
     }
@@ -45,7 +50,7 @@ module IntervalsRefresh {
         if (d == null) {
             return true;
         }
-        if (d["wd"] != IntervalsSettings.windowDays()) {
+        if (d["wd"] != IntervalsApi.MAX_DAYS) {
             return true;
         }
         var s = d["s"];
@@ -100,7 +105,7 @@ module IntervalsRefresh {
             var out = {
                 "ts" => Time.now().value(),
                 "w" => _summary,
-                "wd" => IntervalsSettings.windowDays()
+                "wd" => IntervalsApi.MAX_DAYS
             };
             if (series != null) {
                 out["s"] = series;

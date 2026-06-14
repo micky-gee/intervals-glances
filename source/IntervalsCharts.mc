@@ -344,27 +344,19 @@ module IntervalsCharts {
     function drawPolarSeries(dc as Dc, series as Array, lo as Float, hi as Float,
             cx as Number, cy as Number, rIn as Number, rOut as Number,
             color as Number, pen as Number) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(pen);
         var n = series.size();
         var scale = (rOut - rIn) / (hi - lo);
-        var px = -1;
-        var py = -1;
+        var pts = [] as Array<Array<Number> >;
         for (var i = 0; i < n; i++) {
             var rad = (RING_START_DEG - RING_SWEEP_DEG * i / (n - 1))
                 * Math.PI / 180.0;
             var r = rIn + ((series[i].toFloat() - lo) * scale).toNumber();
             if (r > rOut) { r = rOut; }
             if (r < rIn) { r = rIn; }
-            var x = cx + (r * Math.cos(rad)).toNumber();
-            var y = cy - (r * Math.sin(rad)).toNumber();
-            if (px >= 0) {
-                dc.drawLine(px, py, x, y);
-            }
-            px = x;
-            py = y;
+            pts.add([cx + (r * Math.cos(rad)).toNumber(),
+                     cy - (r * Math.sin(rad)).toNumber()]);
         }
-        dc.setPenWidth(1);
+        drawSmooth(dc, pts, color, pen);
     }
 
     // Radial ring chart: the time window wraps around the bezel. One radial
@@ -440,24 +432,34 @@ module IntervalsCharts {
         if (penW > 9) { penW = 9; }
         dc.setPenWidth(penW);
 
+        // When there's a baseline band, bars run from the band centre (the
+        // mean radius) out to / in to the day's value, so each reads as a
+        // deviation from baseline. Otherwise they grow from the inner ring.
+        var rBase = useBase ? bandR(mean, minV, maxV, r1, span) : r1;
         for (var i = 0; i < n; i++) {
             var v = values[i];
             if (v == null) {
                 continue;
             }
             var f = v.toFloat();
-            var frac = (f - minV) / (maxV - minV);
-            if (frac < 0.05) { frac = 0.05; }   // always a visible nub
             var rad = (RING_START_DEG - RING_SWEEP_DEG * i / (n - 1))
                 * Math.PI / 180.0;
             var cosv = Math.cos(rad);
             var sinv = Math.sin(rad);
-            var r2 = r1 + span * frac;
+            var rFrom = rBase;
+            var rTo;
+            if (useBase) {
+                rTo = bandR(f, minV, maxV, r1, span);
+            } else {
+                var frac = (f - minV) / (maxV - minV);
+                if (frac < 0.05) { frac = 0.05; }   // always a visible nub
+                rTo = r1 + (span * frac).toNumber();
+            }
             var barColor = useBase ? baselineColor(f, mean, sd, color) : color;
             dc.setColor(i == lastIdx ? Graphics.COLOR_WHITE : barColor,
                 Graphics.COLOR_TRANSPARENT);
-            dc.drawLine(cx + (r1 * cosv).toNumber(), cy - (r1 * sinv).toNumber(),
-                cx + (r2 * cosv).toNumber(), cy - (r2 * sinv).toNumber());
+            dc.drawLine(cx + (rFrom * cosv).toNumber(), cy - (rFrom * sinv).toNumber(),
+                cx + (rTo * cosv).toNumber(), cy - (rTo * sinv).toNumber());
         }
         dc.setPenWidth(1);
         return true;
@@ -469,6 +471,53 @@ module IntervalsCharts {
         if (frac < 0.0) { frac = 0.0; }
         if (frac > 1.0) { frac = 1.0; }
         return r1 + (span * frac).toNumber();
+    }
+
+    // Smooth curve through screen points (each a [x, y] pair) using a
+    // Catmull-Rom spline that passes through every point. Subdivision scales
+    // inversely with the point count, so sparse series (narrow zoom windows)
+    // are interpolated into a smooth curve while dense series (90 days) stay
+    // effectively straight at no extra cost.
+    function drawSmooth(dc as Dc, pts as Array<Array<Number> >, color as Number, pen as Number) as Void {
+        var n = pts.size();
+        if (n < 2) {
+            return;
+        }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(pen);
+        if (n == 2) {
+            dc.drawLine(pts[0][0], pts[0][1], pts[1][0], pts[1][1]);
+            dc.setPenWidth(1);
+            return;
+        }
+        var steps = (110 / (n - 1)).toNumber();
+        if (steps < 1) { steps = 1; }
+        if (steps > 22) { steps = 22; }
+        var px = pts[0][0];
+        var py = pts[0][1];
+        for (var i = 0; i < n - 1; i++) {
+            var p0 = pts[i > 0 ? i - 1 : 0] as Array<Number>;
+            var p1 = pts[i] as Array<Number>;
+            var p2 = pts[i + 1] as Array<Number>;
+            var p3 = pts[i < n - 2 ? i + 2 : n - 1] as Array<Number>;
+            for (var s = 1; s <= steps; s++) {
+                var t = s.toFloat() / steps;
+                var t2 = t * t;
+                var t3 = t2 * t;
+                var x = (0.5 * (2 * p1[0]
+                    + (p2[0] - p0[0]) * t
+                    + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2
+                    + (3 * p1[0] - p0[0] - 3 * p2[0] + p3[0]) * t3)).toNumber();
+                var y = (0.5 * (2 * p1[1]
+                    + (p2[1] - p0[1]) * t
+                    + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2
+                    + (3 * p1[1] - p0[1] - 3 * p2[1] + p3[1]) * t3)).toNumber();
+                dc.drawLine(px, py, x, y);
+                px = x;
+                py = y;
+            }
+        }
+        dc.setPenWidth(1);
     }
 
     function xAt(i as Number, n as Number, x0 as Number, x1 as Number) as Number {
@@ -483,28 +532,20 @@ module IntervalsCharts {
         return y;
     }
 
-    // Connect consecutive non-null points, scaled to minV..maxV.
+    // Smooth line through the non-null points, scaled to minV..maxV. Nulls
+    // are bridged (the curve spans gaps) as before, just smoothed.
     function drawPolyline(dc as Dc, values as Array, minV as Float,
             maxV as Float, x0 as Number, x1 as Number,
             y0 as Number, y1 as Number, color as Number, pen as Number) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(pen);
         var n = values.size();
-        var px = -1;
-        var py = -1;
+        var pts = [] as Array<Array<Number> >;
         for (var i = 0; i < n; i++) {
             var v = values[i];
             if (v == null) {
                 continue;
             }
-            var x = xAt(i, n, x0, x1);
-            var y = yAt(v.toFloat(), minV, maxV, y0, y1);
-            if (px >= 0) {
-                dc.drawLine(px, py, x, y);
-            }
-            px = x;
-            py = y;
+            pts.add([xAt(i, n, x0, x1), yAt(v.toFloat(), minV, maxV, y0, y1)]);
         }
-        dc.setPenWidth(1);
+        drawSmooth(dc, pts, color, pen);
     }
 }
