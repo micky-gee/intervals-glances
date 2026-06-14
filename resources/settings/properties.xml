@@ -4,16 +4,16 @@
     <property id="athleteId" type="string">0</property>
     <property id="glanceMode" type="number">0</property>
     <property id="formAsPercent" type="boolean">false</property>
-    <property id="roundCharts" type="boolean">true</property>
-    <property id="chart1" type="number">1</property>
-    <property id="chart2" type="number">5</property>
-    <property id="chart3" type="number">6</property>
-    <property id="chartRing" type="number">13</property>
-    <property id="pageForm" type="boolean">true</property>
-    <property id="pageRecovery" type="boolean">true</property>
-    <property id="pageSleep" type="boolean">true</property>
-    <property id="pageBody" type="boolean">true</property>
-    <property id="pageFuel" type="boolean">true</property>
-    <property id="pageFeel" type="boolean">true</property>
-    <property id="pageStatus" type="boolean">true</property>
+    <property id="graph1Type" type="number">1</property>
+    <property id="graph1Round" type="boolean">true</property>
+    <property id="graph2Type" type="number">2</property>
+    <property id="graph2Round" type="boolean">true</property>
+    <property id="graph3Type" type="number">7</property>
+    <property id="graph3Round" type="boolean">true</property>
+    <property id="graph4Type" type="number">14</property>
+    <property id="graph4Round" type="boolean">true</property>
+    <property id="data1Type" type="number">1</property>
+    <property id="data2Type" type="number">2</property>
+    <property id="data3Type" type="number">3</property>
+    <property id="data4Type" type="number">4</property>
 </properties>

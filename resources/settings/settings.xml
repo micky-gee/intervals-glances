@@ -17,116 +17,156 @@
     <setting propertyKey="@Properties.formAsPercent" title="@Strings.SetFormPct">
         <settingConfig type="boolean"/>
     </setting>
-    <setting propertyKey="@Properties.roundCharts" title="@Strings.SetRoundCharts">
-        <settingConfig type="boolean"/>
-    </setting>
-    <setting propertyKey="@Properties.chart1" title="@Strings.SetChart1">
+    <setting propertyKey="@Properties.graph1Type" title="@Strings.SetGraph1">
         <settingConfig type="list">
             <listEntry value="0">Off</listEntry>
-            <listEntry value="1">HRV (rMSSD)</listEntry>
-            <listEntry value="2">HRV SDNN</listEntry>
-            <listEntry value="3">Resting HR</listEntry>
-            <listEntry value="4">Sleeping HR</listEntry>
-            <listEntry value="5">Ramp rate</listEntry>
-            <listEntry value="6">eFTP</listEntry>
-            <listEntry value="7">Weight</listEntry>
-            <listEntry value="8">Body fat</listEntry>
-            <listEntry value="9">VO2max</listEntry>
-            <listEntry value="10">Sleep score</listEntry>
-            <listEntry value="11">Sleep hours</listEntry>
-            <listEntry value="12">Readiness</listEntry>
-            <listEntry value="13">Steps</listEntry>
-            <listEntry value="14">SpO2</listEntry>
-            <listEntry value="15">Respiration</listEntry>
-            <listEntry value="16">Stress index</listEntry>
-            <listEntry value="17">Calories</listEntry>
+            <listEntry value="1">Load (fitness/fatigue)</listEntry>
+            <listEntry value="2">HRV (rMSSD)</listEntry>
+            <listEntry value="3">HRV SDNN</listEntry>
+            <listEntry value="4">Resting HR</listEntry>
+            <listEntry value="5">Sleeping HR</listEntry>
+            <listEntry value="6">Ramp rate</listEntry>
+            <listEntry value="7">eFTP</listEntry>
+            <listEntry value="8">Weight</listEntry>
+            <listEntry value="9">Body fat</listEntry>
+            <listEntry value="10">VO2max</listEntry>
+            <listEntry value="11">Sleep score</listEntry>
+            <listEntry value="12">Sleep hours</listEntry>
+            <listEntry value="13">Readiness</listEntry>
+            <listEntry value="14">Steps</listEntry>
+            <listEntry value="15">SpO2</listEntry>
+            <listEntry value="16">Respiration</listEntry>
+            <listEntry value="17">Stress index</listEntry>
+            <listEntry value="18">Calories</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.chart2" title="@Strings.SetChart2">
+    <setting propertyKey="@Properties.graph1Round" title="@Strings.SetGraph1Shape">
+        <settingConfig type="boolean"/>
+    </setting>
+    <setting propertyKey="@Properties.graph2Type" title="@Strings.SetGraph2">
         <settingConfig type="list">
             <listEntry value="0">Off</listEntry>
-            <listEntry value="1">HRV (rMSSD)</listEntry>
-            <listEntry value="2">HRV SDNN</listEntry>
-            <listEntry value="3">Resting HR</listEntry>
-            <listEntry value="4">Sleeping HR</listEntry>
-            <listEntry value="5">Ramp rate</listEntry>
-            <listEntry value="6">eFTP</listEntry>
-            <listEntry value="7">Weight</listEntry>
-            <listEntry value="8">Body fat</listEntry>
-            <listEntry value="9">VO2max</listEntry>
-            <listEntry value="10">Sleep score</listEntry>
-            <listEntry value="11">Sleep hours</listEntry>
-            <listEntry value="12">Readiness</listEntry>
-            <listEntry value="13">Steps</listEntry>
-            <listEntry value="14">SpO2</listEntry>
-            <listEntry value="15">Respiration</listEntry>
-            <listEntry value="16">Stress index</listEntry>
-            <listEntry value="17">Calories</listEntry>
+            <listEntry value="1">Load (fitness/fatigue)</listEntry>
+            <listEntry value="2">HRV (rMSSD)</listEntry>
+            <listEntry value="3">HRV SDNN</listEntry>
+            <listEntry value="4">Resting HR</listEntry>
+            <listEntry value="5">Sleeping HR</listEntry>
+            <listEntry value="6">Ramp rate</listEntry>
+            <listEntry value="7">eFTP</listEntry>
+            <listEntry value="8">Weight</listEntry>
+            <listEntry value="9">Body fat</listEntry>
+            <listEntry value="10">VO2max</listEntry>
+            <listEntry value="11">Sleep score</listEntry>
+            <listEntry value="12">Sleep hours</listEntry>
+            <listEntry value="13">Readiness</listEntry>
+            <listEntry value="14">Steps</listEntry>
+            <listEntry value="15">SpO2</listEntry>
+            <listEntry value="16">Respiration</listEntry>
+            <listEntry value="17">Stress index</listEntry>
+            <listEntry value="18">Calories</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.chart3" title="@Strings.SetChart3">
+    <setting propertyKey="@Properties.graph2Round" title="@Strings.SetGraph2Shape">
+        <settingConfig type="boolean"/>
+    </setting>
+    <setting propertyKey="@Properties.graph3Type" title="@Strings.SetGraph3">
         <settingConfig type="list">
             <listEntry value="0">Off</listEntry>
-            <listEntry value="1">HRV (rMSSD)</listEntry>
-            <listEntry value="2">HRV SDNN</listEntry>
-            <listEntry value="3">Resting HR</listEntry>
-            <listEntry value="4">Sleeping HR</listEntry>
-            <listEntry value="5">Ramp rate</listEntry>
-            <listEntry value="6">eFTP</listEntry>
-            <listEntry value="7">Weight</listEntry>
-            <listEntry value="8">Body fat</listEntry>
-            <listEntry value="9">VO2max</listEntry>
-            <listEntry value="10">Sleep score</listEntry>
-            <listEntry value="11">Sleep hours</listEntry>
-            <listEntry value="12">Readiness</listEntry>
-            <listEntry value="13">Steps</listEntry>
-            <listEntry value="14">SpO2</listEntry>
-            <listEntry value="15">Respiration</listEntry>
-            <listEntry value="16">Stress index</listEntry>
-            <listEntry value="17">Calories</listEntry>
+            <listEntry value="1">Load (fitness/fatigue)</listEntry>
+            <listEntry value="2">HRV (rMSSD)</listEntry>
+            <listEntry value="3">HRV SDNN</listEntry>
+            <listEntry value="4">Resting HR</listEntry>
+            <listEntry value="5">Sleeping HR</listEntry>
+            <listEntry value="6">Ramp rate</listEntry>
+            <listEntry value="7">eFTP</listEntry>
+            <listEntry value="8">Weight</listEntry>
+            <listEntry value="9">Body fat</listEntry>
+            <listEntry value="10">VO2max</listEntry>
+            <listEntry value="11">Sleep score</listEntry>
+            <listEntry value="12">Sleep hours</listEntry>
+            <listEntry value="13">Readiness</listEntry>
+            <listEntry value="14">Steps</listEntry>
+            <listEntry value="15">SpO2</listEntry>
+            <listEntry value="16">Respiration</listEntry>
+            <listEntry value="17">Stress index</listEntry>
+            <listEntry value="18">Calories</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.chartRing" title="@Strings.SetChartRing">
+    <setting propertyKey="@Properties.graph3Round" title="@Strings.SetGraph3Shape">
+        <settingConfig type="boolean"/>
+    </setting>
+    <setting propertyKey="@Properties.graph4Type" title="@Strings.SetGraph4">
         <settingConfig type="list">
             <listEntry value="0">Off</listEntry>
-            <listEntry value="1">HRV (rMSSD)</listEntry>
-            <listEntry value="2">HRV SDNN</listEntry>
-            <listEntry value="3">Resting HR</listEntry>
-            <listEntry value="4">Sleeping HR</listEntry>
-            <listEntry value="5">Ramp rate</listEntry>
-            <listEntry value="6">eFTP</listEntry>
-            <listEntry value="7">Weight</listEntry>
-            <listEntry value="8">Body fat</listEntry>
-            <listEntry value="9">VO2max</listEntry>
-            <listEntry value="10">Sleep score</listEntry>
-            <listEntry value="11">Sleep hours</listEntry>
-            <listEntry value="12">Readiness</listEntry>
-            <listEntry value="13">Steps</listEntry>
-            <listEntry value="14">SpO2</listEntry>
-            <listEntry value="15">Respiration</listEntry>
-            <listEntry value="16">Stress index</listEntry>
-            <listEntry value="17">Calories</listEntry>
+            <listEntry value="1">Load (fitness/fatigue)</listEntry>
+            <listEntry value="2">HRV (rMSSD)</listEntry>
+            <listEntry value="3">HRV SDNN</listEntry>
+            <listEntry value="4">Resting HR</listEntry>
+            <listEntry value="5">Sleeping HR</listEntry>
+            <listEntry value="6">Ramp rate</listEntry>
+            <listEntry value="7">eFTP</listEntry>
+            <listEntry value="8">Weight</listEntry>
+            <listEntry value="9">Body fat</listEntry>
+            <listEntry value="10">VO2max</listEntry>
+            <listEntry value="11">Sleep score</listEntry>
+            <listEntry value="12">Sleep hours</listEntry>
+            <listEntry value="13">Readiness</listEntry>
+            <listEntry value="14">Steps</listEntry>
+            <listEntry value="15">SpO2</listEntry>
+            <listEntry value="16">Respiration</listEntry>
+            <listEntry value="17">Stress index</listEntry>
+            <listEntry value="18">Calories</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.pageForm" title="@Strings.SetPageForm">
+    <setting propertyKey="@Properties.graph4Round" title="@Strings.SetGraph4Shape">
         <settingConfig type="boolean"/>
     </setting>
-    <setting propertyKey="@Properties.pageRecovery" title="@Strings.SetPageRecovery">
-        <settingConfig type="boolean"/>
+    <setting propertyKey="@Properties.data1Type" title="@Strings.SetData1">
+        <settingConfig type="list">
+            <listEntry value="0">Off</listEntry>
+            <listEntry value="1">Form</listEntry>
+            <listEntry value="2">Recovery</listEntry>
+            <listEntry value="3">Sleep</listEntry>
+            <listEntry value="4">Body</listEntry>
+            <listEntry value="5">Fuel + steps</listEntry>
+            <listEntry value="6">How you feel</listEntry>
+            <listEntry value="7">Status</listEntry>
+        </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.pageSleep" title="@Strings.SetPageSleep">
-        <settingConfig type="boolean"/>
+    <setting propertyKey="@Properties.data2Type" title="@Strings.SetData2">
+        <settingConfig type="list">
+            <listEntry value="0">Off</listEntry>
+            <listEntry value="1">Form</listEntry>
+            <listEntry value="2">Recovery</listEntry>
+            <listEntry value="3">Sleep</listEntry>
+            <listEntry value="4">Body</listEntry>
+            <listEntry value="5">Fuel + steps</listEntry>
+            <listEntry value="6">How you feel</listEntry>
+            <listEntry value="7">Status</listEntry>
+        </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.pageBody" title="@Strings.SetPageBody">
-        <settingConfig type="boolean"/>
+    <setting propertyKey="@Properties.data3Type" title="@Strings.SetData3">
+        <settingConfig type="list">
+            <listEntry value="0">Off</listEntry>
+            <listEntry value="1">Form</listEntry>
+            <listEntry value="2">Recovery</listEntry>
+            <listEntry value="3">Sleep</listEntry>
+            <listEntry value="4">Body</listEntry>
+            <listEntry value="5">Fuel + steps</listEntry>
+            <listEntry value="6">How you feel</listEntry>
+            <listEntry value="7">Status</listEntry>
+        </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.pageFuel" title="@Strings.SetPageFuel">
-        <settingConfig type="boolean"/>
-    </setting>
-    <setting propertyKey="@Properties.pageFeel" title="@Strings.SetPageFeel">
-        <settingConfig type="boolean"/>
-    </setting>
-    <setting propertyKey="@Properties.pageStatus" title="@Strings.SetPageStatus">
-        <settingConfig type="boolean"/>
+    <setting propertyKey="@Properties.data4Type" title="@Strings.SetData4">
+        <settingConfig type="list">
+            <listEntry value="0">Off</listEntry>
+            <listEntry value="1">Form</listEntry>
+            <listEntry value="2">Recovery</listEntry>
+            <listEntry value="3">Sleep</listEntry>
+            <listEntry value="4">Body</listEntry>
+            <listEntry value="5">Fuel + steps</listEntry>
+            <listEntry value="6">How you feel</listEntry>
+            <listEntry value="7">Status</listEntry>
+        </settingConfig>
     </setting>
 </settings>

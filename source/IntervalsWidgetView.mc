@@ -25,26 +25,18 @@ class IntervalsWidgetView extends WatchUi.View {
         var pages = IntervalsPages.list();
         var id = pages[_page < pages.size() ? _page : 0] as String;
 
-        if (id.equals("form")) {
-            drawFormPage(dc);
-        } else if (id.equals("load")) {
-            drawLoadPage(dc);
-        } else if (id.find("chart:") == 0) {
-            drawChartPage(dc, id.substring(6, id.length()));
-        } else if (id.find("ring:") == 0) {
-            drawRingPage(dc, id.substring(5, id.length()));
-        } else if (id.equals("recovery")) {
-            drawTilesPage(dc, "RECOVERY", recoveryItems());
-        } else if (id.equals("sleep")) {
-            drawTilesPage(dc, "SLEEP", sleepItems());
-        } else if (id.equals("body")) {
-            drawTilesPage(dc, "BODY", bodyItems());
-        } else if (id.equals("fuel")) {
-            drawTilesPage(dc, "FUEL + STEPS", fuelItems());
-        } else if (id.equals("feel")) {
-            drawTilesPage(dc, "HOW YOU FEEL", feelItems());
+        if (id.find("g:") == 0) {
+            var round = id.substring(2, 3).equals("r");
+            var type = id.substring(4, id.length());
+            if (type.equals("load")) {
+                drawLoadPage(dc, round);
+            } else {
+                drawMetricPage(dc, type, round);
+            }
+        } else if (id.find("d:") == 0) {
+            drawDataPage(dc, id.substring(2, id.length()));
         } else {
-            drawTilesPage(dc, "STATUS", statusItems());
+            drawNonePage(dc);
         }
 
         if (IntervalsRefresh.zoomActive && IntervalsPages.isChart(id)) {
@@ -52,6 +44,34 @@ class IntervalsWidgetView extends WatchUi.View {
         } else {
             drawPageDots(dc, pages.size());
         }
+    }
+
+    // Map a data-page type key to its tile content.
+    hidden function drawDataPage(dc as Dc, type as String) as Void {
+        if (type.equals("form")) {
+            drawFormPage(dc);
+        } else if (type.equals("recovery")) {
+            drawTilesPage(dc, "RECOVERY", recoveryItems());
+        } else if (type.equals("sleep")) {
+            drawTilesPage(dc, "SLEEP", sleepItems());
+        } else if (type.equals("body")) {
+            drawTilesPage(dc, "BODY", bodyItems());
+        } else if (type.equals("fuel")) {
+            drawTilesPage(dc, "FUEL + STEPS", fuelItems());
+        } else if (type.equals("feel")) {
+            drawTilesPage(dc, "HOW YOU FEEL", feelItems());
+        } else {
+            drawTilesPage(dc, "STATUS", statusItems());
+        }
+    }
+
+    // Shown only when every page is set to "off".
+    hidden function drawNonePage(dc as Dc) as Void {
+        drawHeader(dc, "INTERVALS");
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2, Graphics.FONT_SMALL,
+            "Enable graph or data\npages in settings",
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // START opens this on chart pages: bold white +/- glyphs sitting next to
@@ -145,7 +165,7 @@ class IntervalsWidgetView extends WatchUi.View {
 
     // ---- page 1: fitness/fatigue over time-varying form-zone bands ------
 
-    hidden function drawLoadPage(dc as Dc) as Void {
+    hidden function drawLoadPage(dc as Dc, round as Boolean) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
 
@@ -157,7 +177,7 @@ class IntervalsWidgetView extends WatchUi.View {
             return;
         }
 
-        if (IntervalsSettings.roundCharts()) {
+        if (round) {
             drawLoadRing(dc, ctl, atl);
             return;
         }
@@ -224,8 +244,8 @@ class IntervalsWidgetView extends WatchUi.View {
 
     // ---- configurable metric chart pages ---------------------------------
 
-    hidden function drawChartPage(dc as Dc, key as String) as Void {
-        if (IntervalsSettings.roundCharts()) {
+    hidden function drawMetricPage(dc as Dc, key as String, round as Boolean) as Void {
+        if (round) {
             drawRingPage(dc, key);
             return;
         }
@@ -437,7 +457,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.8.0", "", IntervalsUi.SLATE]
+            ["VERSION", "0.8.1", "", IntervalsUi.SLATE]
         ];
     }
 

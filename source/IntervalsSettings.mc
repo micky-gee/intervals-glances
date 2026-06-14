@@ -26,21 +26,19 @@ module IntervalsSettings {
         return v == true;
     }
 
-    // Index order must match the chart list entries in settings.xml.
-    const CHART_KEYS = [
-        "off", "hrv", "hrvSDNN", "restingHR", "avgSleepingHR", "rampRate",
-        "eftp", "weight", "bodyFat", "vo2max", "sleepScore", "sleepHours",
-        "readiness", "steps", "spO2", "respiration", "baevskySI", "kcalConsumed"
-    ] as Array<String>;
+    const GRAPH_PAGES = 4;
+    const DATA_PAGES = 4;
 
-    // Chart slot n (1..3) -> selected metric key, or "off".
-    function chartField(n as Number) as String {
-        var v = asNumber(Application.Properties.getValue("chart" + n));
-        if (v != null && v >= 0 && v < CHART_KEYS.size()) {
-            return CHART_KEYS[v];
-        }
-        return "off";
-    }
+    // Index order must match the graph/data list entries in settings.xml.
+    const GRAPH_TYPES = [
+        "off", "load", "hrv", "hrvSDNN", "restingHR", "avgSleepingHR",
+        "rampRate", "eftp", "weight", "bodyFat", "vo2max", "sleepScore",
+        "sleepHours", "readiness", "steps", "spO2", "respiration",
+        "baevskySI", "kcalConsumed"
+    ] as Array<String>;
+    const DATA_TYPES = [
+        "off", "form", "recovery", "sleep", "body", "fuel", "feel", "status"
+    ] as Array<String>;
 
     // Settings synced from the phone sometimes arrive as Strings or Floats
     // rather than Numbers; coerce before range-checking.
@@ -55,6 +53,29 @@ module IntervalsSettings {
         return null;
     }
 
+    // Graph page n (1..GRAPH_PAGES): chart type key ("off", "load", or a
+    // metric), and whether it renders round (vs rectangular).
+    function graphType(n as Number) as String {
+        var v = asNumber(Application.Properties.getValue("graph" + n + "Type"));
+        if (v != null && v >= 0 && v < GRAPH_TYPES.size()) {
+            return GRAPH_TYPES[v];
+        }
+        return "off";
+    }
+
+    function graphRound(n as Number) as Boolean {
+        return Application.Properties.getValue("graph" + n + "Round") != false;
+    }
+
+    // Data page n (1..DATA_PAGES): tile page key, or "off".
+    function dataType(n as Number) as String {
+        var v = asNumber(Application.Properties.getValue("data" + n + "Type"));
+        if (v != null && v >= 0 && v < DATA_TYPES.size()) {
+            return DATA_TYPES[v];
+        }
+        return "off";
+    }
+
     // Glance content: 0 = fit+fat+form, 1 = fitness, 2 = fatigue, 3 = form.
     function glanceMode() as Number {
         var v = asNumber(Application.Properties.getValue("glanceMode"));
@@ -62,25 +83,5 @@ module IntervalsSettings {
             return v;
         }
         return 0;
-    }
-
-    // Per-page visibility toggles ("pageRecovery" etc.), default shown.
-    function pageEnabled(prop as String) as Boolean {
-        return Application.Properties.getValue(prop) != false;
-    }
-
-    // Render the load and metric chart pages radially (vs rectangular).
-    function roundCharts() as Boolean {
-        var v = Application.Properties.getValue("roundCharts");
-        return v != false;
-    }
-
-    // The radial ring chart's metric key, or "off".
-    function ringField() as String {
-        var v = asNumber(Application.Properties.getValue("chartRing"));
-        if (v != null && v >= 0 && v < CHART_KEYS.size()) {
-            return CHART_KEYS[v];
-        }
-        return "off";
     }
 }

@@ -26,8 +26,6 @@ module IntervalsApi {
         "steps,kcalConsumed,carbohydrates,protein,fatTotal,hydrationVolume," +
         "soreness,fatigue,stress,mood,motivation,injury";
 
-    const CHART_SLOTS = 3;
-
     function wellnessUrl(athleteId as String) as String {
         return "https://intervals.icu/api/v1/athlete/" + athleteId + "/wellness";
     }
@@ -63,19 +61,15 @@ module IntervalsApi {
         return rangeParams(RECENT_DAYS, FIELDS_RECENT);
     }
 
-    // All metric keys needing trend series: the line chart slots plus the
-    // ring chart (excluding "off", deduplicated).
+    // Metric keys needing trend series: the metric graph pages, excluding
+    // "off" and "load" (ctl/atl are always fetched), deduplicated.
     function selectedChartKeys() as Array {
         var keys = [];
-        for (var i = 1; i <= CHART_SLOTS; i++) {
-            var k = IntervalsSettings.chartField(i);
-            if (!k.equals("off") && keys.indexOf(k) < 0) {
+        for (var i = 1; i <= IntervalsSettings.GRAPH_PAGES; i++) {
+            var k = IntervalsSettings.graphType(i);
+            if (!k.equals("off") && !k.equals("load") && keys.indexOf(k) < 0) {
                 keys.add(k);
             }
-        }
-        var rk = IntervalsSettings.ringField();
-        if (!rk.equals("off") && keys.indexOf(rk) < 0) {
-            keys.add(rk);
         }
         return keys;
     }

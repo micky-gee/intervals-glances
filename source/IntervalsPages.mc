@@ -1,29 +1,30 @@
 import Toybox.Lang;
 
-// Page order is dynamic: chart pages appear for each configured chart slot.
+// Page order is dynamic: up to 4 graph pages then up to 4 data pages, each
+// skipped when set to "off". Descriptors are self-describing so the view
+// needs no settings lookup:
+//   graph -> "g:<r|s>:<type>"   (r = round, s = square/rectangular)
+//   data  -> "d:<type>"
+//   none  -> "none"             (sentinel so the list is never empty)
 module IntervalsPages {
 
     function list() as Array {
-        // The load page is always present so the list can never be empty.
         var p = [];
-        if (IntervalsSettings.pageEnabled("pageForm")) { p.add("form"); }
-        p.add("load");
-        for (var i = 1; i <= IntervalsApi.CHART_SLOTS; i++) {
-            var k = IntervalsSettings.chartField(i);
-            if (!k.equals("off") && p.indexOf("chart:" + k) < 0) {
-                p.add("chart:" + k);
+        for (var i = 1; i <= IntervalsSettings.GRAPH_PAGES; i++) {
+            var t = IntervalsSettings.graphType(i);
+            if (!t.equals("off")) {
+                p.add("g:" + (IntervalsSettings.graphRound(i) ? "r" : "s") + ":" + t);
             }
         }
-        var rk = IntervalsSettings.ringField();
-        if (!rk.equals("off")) {
-            p.add("ring:" + rk);
+        for (var i = 1; i <= IntervalsSettings.DATA_PAGES; i++) {
+            var t = IntervalsSettings.dataType(i);
+            if (!t.equals("off")) {
+                p.add("d:" + t);
+            }
         }
-        if (IntervalsSettings.pageEnabled("pageRecovery")) { p.add("recovery"); }
-        if (IntervalsSettings.pageEnabled("pageSleep")) { p.add("sleep"); }
-        if (IntervalsSettings.pageEnabled("pageBody")) { p.add("body"); }
-        if (IntervalsSettings.pageEnabled("pageFuel")) { p.add("fuel"); }
-        if (IntervalsSettings.pageEnabled("pageFeel")) { p.add("feel"); }
-        if (IntervalsSettings.pageEnabled("pageStatus")) { p.add("status"); }
+        if (p.size() == 0) {
+            p.add("none");
+        }
         return p;
     }
 
@@ -36,8 +37,8 @@ module IntervalsPages {
         return l[page < l.size() ? page : 0];
     }
 
-    // Time-series pages that the zoom control applies to.
+    // Graph pages are the time-series charts the zoom control applies to.
     function isChart(id as String) as Boolean {
-        return id.equals("load") || id.find("chart:") == 0 || id.find("ring:") == 0;
+        return id.find("g:") == 0;
     }
 }

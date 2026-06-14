@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.1 — 2026-06-14
+
+- Reworked the page model into 4 configurable graph pages and 4 data pages.
+  Each graph page picks a type (off / load / any metric) and its own round
+  or rectangular shape; each data page picks off / form / recovery / sleep /
+  body / fuel / feel / status. Replaces the old fixed chart slots, the global
+  round-charts toggle, and the per-page show/hide switches.
+
 ## v0.8.0 — 2026-06-14
 
 - Interactive chart zoom: START opens a zoom control on the chart pages with

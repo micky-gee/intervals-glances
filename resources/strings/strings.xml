@@ -4,17 +4,17 @@
     <string id="SetApiKey">intervals.icu API key</string>
     <string id="SetAthleteId">Athlete ID (0 = me)</string>
     <string id="SetFormPct">Show form as % of fitness</string>
-    <string id="SetChart1">Chart 1</string>
-    <string id="SetChart2">Chart 2</string>
-    <string id="SetChart3">Chart 3</string>
-    <string id="SetChartRing">Ring chart</string>
-    <string id="SetRoundCharts">Round charts</string>
     <string id="SetGlance">Glance display</string>
-    <string id="SetPageForm">Show form page</string>
-    <string id="SetPageRecovery">Show recovery page</string>
-    <string id="SetPageSleep">Show sleep page</string>
-    <string id="SetPageBody">Show body page</string>
-    <string id="SetPageFuel">Show fuel page</string>
-    <string id="SetPageFeel">Show feel page</string>
-    <string id="SetPageStatus">Show status page</string>
+    <string id="SetGraph1">Graph 1</string>
+    <string id="SetGraph1Shape">Graph 1 round</string>
+    <string id="SetGraph2">Graph 2</string>
+    <string id="SetGraph2Shape">Graph 2 round</string>
+    <string id="SetGraph3">Graph 3</string>
+    <string id="SetGraph3Shape">Graph 3 round</string>
+    <string id="SetGraph4">Graph 4</string>
+    <string id="SetGraph4Shape">Graph 4 round</string>
+    <string id="SetData1">Data page 1</string>
+    <string id="SetData2">Data page 2</string>
+    <string id="SetData3">Data page 3</string>
+    <string id="SetData4">Data page 4</string>
 </strings>
