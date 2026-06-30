@@ -6,9 +6,8 @@ import Toybox.Math;
 module IntervalsCharts {
 
     // Form-zone band fills, dark enough that the series lines pop.
-    // Zones are % of CTL, so in load-space each day's band edges are
-    // multiples of that day's CTL (atl = ctl * (1 - form%/100)).
-    const ZONE_MULS = [0.80, 0.95, 1.10, 1.30] as Array<Float>;
+    // Band edges in load-space: atl = ctl - threshold (absolute TSB points).
+    const ZONE_THRESHOLDS = [20.0, 5.0, -10.0, -30.0] as Array<Float>;
     const ZONE_FILLS = [
         0x44445C,   // transition (form > +20%): slate
         0x1F66A3,   // fresh (+5..+20%): unmistakable blue
@@ -108,7 +107,7 @@ module IntervalsCharts {
 
             var prevY = y1;
             for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? c * ZONE_MULS[z] : hi;
+                var bandTop = z < 4 ? c - ZONE_THRESHOLDS[z] : hi;
                 var yTop = y1 - ((bandTop - lo) * scale).toNumber();
                 if (yTop < y0) { yTop = y0; }
                 if (yTop < prevY) {
@@ -297,7 +296,7 @@ module IntervalsCharts {
 
             var prevR = rIn;
             for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? c * ZONE_MULS[z] : hi;
+                var bandTop = z < 4 ? c - ZONE_THRESHOLDS[z] : hi;
                 var r2 = rIn + ((bandTop - lo) * scale).toNumber();
                 if (r2 > rOut) { r2 = rOut; }
                 if (r2 > prevR) {

@@ -8,7 +8,7 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
     // Form-zone band fills, kept in sync with IntervalsCharts.ZONE_FILLS
     // (duplicated so the chart module stays out of the glance memory pool).
     const FILLS = [0x44445C, 0x1F66A3, 0x2E2E2E, 0x1E7A45, 0x4D1A20] as Array<Number>;
-    const MULS = [0.80, 0.95, 1.10, 1.30] as Array<Float>;
+    const THRESHOLDS = [20.0, 5.0, -10.0, -30.0] as Array<Float>;
     const CTL_COLOR = 0x4DA6FF;
     const ATL_COLOR = 0xCC66FF;
 
@@ -144,7 +144,7 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
 
             var prevY = y1;
             for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? c * MULS[z] : hi;
+                var bandTop = z < 4 ? c - THRESHOLDS[z] : hi;
                 var yTop = y1 - ((bandTop - lo) * scale).toNumber();
                 if (yTop < y0) { yTop = y0; }
                 if (yTop < prevY) {
@@ -187,29 +187,23 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
             if (lo == null || f < lo) { lo = f; }
             if (hi == null || f > hi) { hi = f; }
         }
-        if (-0.35 * ctlMax < lo) { lo = -0.35 * ctlMax; }
-        if (0.25 * ctlMax > hi) { hi = 0.25 * ctlMax; }
+        if (-35.0 < lo) { lo = -35.0; }
+        if (25.0 > hi) { hi = 25.0; }
         var pad = (hi - lo) * 0.03;
         lo -= pad;
         hi += pad;
         if (hi - lo < 1) { hi = lo + 1; }
         var scale = (y1 - y0).toFloat() / (hi - lo);
 
-        // In form space the zone edges are fractions of that day's CTL,
+        // In form space the zone edges are absolute TSB points,
         // ordered bottom-up: risk, optimal, grey, fresh, transition.
-        var edges = [-0.30, -0.10, 0.05, 0.20] as Array<Float>;
+        var edges = [-30.0, -10.0, 5.0, 20.0] as Array<Float>;
         var fills = [FILLS[4], FILLS[3], FILLS[2], FILLS[1], FILLS[0]] as Array<Number>;
         dc.setPenWidth(3);
         for (var x = x0; x <= x1; x += 3) {
-            var t = (x - x0).toFloat() / (x1 - x0) * (n - 1);
-            var i = t.toNumber();
-            var i2 = i + 1 < n ? i + 1 : i;
-            var fr = t - i;
-            var c = ctl[i].toFloat() * (1 - fr) + ctl[i2].toFloat() * fr;
-
             var prevY = y1;
             for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? c * edges[z] : hi;
+                var bandTop = z < 4 ? edges[z] : hi;
                 var yTop = y1 - ((bandTop - lo) * scale).toNumber();
                 if (yTop < y0) { yTop = y0; }
                 if (yTop < prevY) {
