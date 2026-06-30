@@ -129,8 +129,8 @@ strips nulls, keeping payloads small for the watch):
    ≤30-day chunks (a 90-day response with `sportInfo` exceeds the watch's
    response buffer).
 
-Form (TSB) is computed as `ctl − atl`; the zone bands follow intervals.icu's
-form-as-%-of-fitness thresholds (+20 / +5 / −10 / −30). eFTP comes from the
+Form (TSB) is computed as `ctl − atl`; the zone bands use absolute TSB
+thresholds (+20 / +5 / −10 / −30) matching intervals.icu's coloring. eFTP comes from the
 wellness `sportInfo` array (first sport entry).
 
 Please be polite to the API — the widget syncs hourly in the background and
