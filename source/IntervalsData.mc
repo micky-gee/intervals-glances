@@ -176,9 +176,9 @@ module IntervalsData {
         return (ctl - w["atl"].toFloat()) / ctl * 100;
     }
 
-    // intervals.icu form zones (form as % of fitness).
+    // intervals.icu form zones (absolute TSB points: CTL - ATL).
     function formZoneLabel() as String {
-        var p = formPercent();
+        var p = form();
         if (p == null) {
             return "";
         }
@@ -190,7 +190,7 @@ module IntervalsData {
     }
 
     function formZoneColor() as Number {
-        var p = formPercent();
+        var p = form();
         if (p == null) {
             return Graphics.COLOR_LT_GRAY;
         }
