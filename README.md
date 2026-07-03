@@ -95,7 +95,7 @@ watch; the glance appears in the carousel.
 | intervals.icu API key | – | from intervals.icu Developer Settings |
 | Athlete ID | `0` | `0` = the key's owner; coaches can use `i12345` IDs |
 | Glance display | fit+fat+form | or fitness / fatigue / form only |
-| Show form as % of fitness | off | matches the intervals.icu zone scale |
+| Form as % of fitness | off | switches the form value AND zone scale; off = absolute TSB points (intervals.icu default) |
 | Round charts | on | polar load chart + ring metric charts |
 | Chart window | 3 months | 6 weeks / 3 months / 6 months |
 | Chart 1–3 | HRV, ramp rate, eFTP | line/ring chart slots |
@@ -129,9 +129,12 @@ strips nulls, keeping payloads small for the watch):
    ≤30-day chunks (a 90-day response with `sportInfo` exceeds the watch's
    response buffer).
 
-Form (TSB) is computed as `ctl − atl`; the zone bands use absolute TSB
-thresholds (+20 / +5 / −10 / −30) matching intervals.icu's coloring. eFTP comes from the
-wellness `sportInfo` array (first sport entry).
+Form (TSB) is computed as `ctl − atl`. The zone coloring and chart bands use
+absolute TSB thresholds (+20 / +5 / −10 / −30) by default, matching
+intervals.icu's coloring; the "Form as % of fitness" setting switches both
+the displayed value and the zone scale to percent-of-CTL, matching the
+equivalent intervals.icu option. eFTP comes from the wellness `sportInfo`
+array (first sport entry).
 
 Please be polite to the API — the widget syncs hourly in the background and
 on-demand, which is well within what the intervals.icu folks ask of clients.

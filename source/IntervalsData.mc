@@ -176,9 +176,16 @@ module IntervalsData {
         return (ctl - w["atl"].toFloat()) / ctl * 100;
     }
 
-    // intervals.icu form zones (absolute TSB points: CTL - ATL).
+    // intervals.icu form zones. The +20/+5/-10/-30 boundaries apply to
+    // absolute TSB points (CTL - ATL, the intervals.icu default) or, when
+    // the "form as % of fitness" setting is on, to form as a % of CTL -
+    // matching the equivalent intervals.icu option.
+    function formZoneValue() as Float? {
+        return IntervalsSettings.formAsPercent() ? formPercent() : form();
+    }
+
     function formZoneLabel() as String {
-        var p = form();
+        var p = formZoneValue();
         if (p == null) {
             return "";
         }
@@ -190,7 +197,7 @@ module IntervalsData {
     }
 
     function formZoneColor() as Number {
-        var p = form();
+        var p = formZoneValue();
         if (p == null) {
             return Graphics.COLOR_LT_GRAY;
         }

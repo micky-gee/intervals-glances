@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.8.2 — 2026-07-03
+
+- **Fixed: form zone coloring now matches intervals.icu** (#1, thanks
+  @tinkeringtuck). Zones were computed as form-as-%-of-CTL but intervals.icu
+  colors by absolute TSB points (+20 / +5 / −10 / −30), so e.g. form −18 at
+  CTL 48 showed High Risk instead of Optimal. Absolute is now the default
+  for the zone label/color and every chart band (load, polar load, glance).
+- The "Form as % of fitness" setting now switches the zone scale along with
+  the displayed value, for athletes using intervals.icu's percent option.
+- Chart auto-range headroom follows the active zone scale, so the optimal
+  and high-risk bands stay visible in absolute mode at low CTL.
+- build.sh works on Windows Git Bash as well as macOS (#1, @tinkeringtuck).
+
 ## v0.8.1 — 2026-06-14
 
 - Reworked the page model into 4 configurable graph pages and 4 data pages.

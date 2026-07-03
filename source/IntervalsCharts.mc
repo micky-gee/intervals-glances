@@ -6,15 +6,23 @@ import Toybox.Math;
 module IntervalsCharts {
 
     // Form-zone band fills, dark enough that the series lines pop.
-    // Band edges in load-space: atl = ctl - threshold (absolute TSB points).
+    // Band edges in load-space, per the form-as-percent setting:
+    //   absolute (default): atl = ctl - threshold (TSB points)
+    //   percent:            atl = ctl * multiplier (% of fitness)
     const ZONE_THRESHOLDS = [20.0, 5.0, -10.0, -30.0] as Array<Float>;
+    const ZONE_MULS = [0.80, 0.95, 1.10, 1.30] as Array<Float>;
     const ZONE_FILLS = [
-        0x44445C,   // transition (form > +20%): slate
-        0x1F66A3,   // fresh (+5..+20%): unmistakable blue
-        0x2E2E2E,   // grey zone (-10..+5%)
-        0x1E7A45,   // optimal (-30..-10%): clear green
-        0x4D1A20    // high risk (< -30%): deep red, not neon
+        0x44445C,   // transition (form > +20): slate
+        0x1F66A3,   // fresh (+5..+20): unmistakable blue
+        0x2E2E2E,   // grey zone (-10..+5)
+        0x1E7A45,   // optimal (-30..-10): clear green
+        0x4D1A20    // high risk (< -30): deep red, not neon
     ] as Array<Number>;
+
+    // Load-space edge of zone z for interpolated fitness c.
+    function bandEdge(c as Float, z as Number, pct as Boolean) as Float {
+        return pct ? c * ZONE_MULS[z] : c - ZONE_THRESHOLDS[z];
+    }
 
     const CTL_COLOR = 0x4DA6FF;
     const ATL_COLOR = 0xCC66FF;
@@ -91,6 +99,7 @@ module IntervalsCharts {
             dc.setAntiAlias(true);
         }
         var n = ctl.size();
+        var pct = IntervalsSettings.formAsPercent();
         var range = loadRange(ctl, atl);
         var lo = range[0] as Float;
         var hi = range[1] as Float;
@@ -107,7 +116,7 @@ module IntervalsCharts {
 
             var prevY = y1;
             for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? c - ZONE_THRESHOLDS[z] : hi;
+                var bandTop = z < 4 ? bandEdge(c, z, pct) : hi;
                 var yTop = y1 - ((bandTop - lo) * scale).toNumber();
                 if (yTop < y0) { yTop = y0; }
                 if (yTop < prevY) {
@@ -246,9 +255,18 @@ module IntervalsCharts {
             if (a > dataMax) { dataMax = a; }
         }
         // Always include the fresh edge below and the whole optimal band
-        // (plus a strip of high-risk) above.
-        var lo = dataMin < ctlMin * 0.78 ? dataMin : ctlMin * 0.78;
-        var hi = dataMax > ctlMax * 1.38 ? dataMax : ctlMax * 1.38;
+        // (plus a strip of high-risk) above, in the active zone scale.
+        var eLo;
+        var eHi;
+        if (IntervalsSettings.formAsPercent()) {
+            eLo = ctlMin * 0.78;
+            eHi = ctlMax * 1.38;
+        } else {
+            eLo = ctlMin - 23.0;
+            eHi = ctlMax + 35.0;
+        }
+        var lo = dataMin < eLo ? dataMin : eLo;
+        var hi = dataMax > eHi ? dataMax : eHi;
         var pad = (hi - lo) * 0.03;
         lo -= pad;
         hi += pad;
@@ -274,6 +292,7 @@ module IntervalsCharts {
             dc.setAntiAlias(true);
         }
         var n = ctl.size();
+        var pct = IntervalsSettings.formAsPercent();
         var range = loadRange(ctl, atl);
         var lo = range[0] as Float;
         var hi = range[1] as Float;
@@ -296,7 +315,7 @@ module IntervalsCharts {
 
             var prevR = rIn;
             for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? c - ZONE_THRESHOLDS[z] : hi;
+                var bandTop = z < 4 ? bandEdge(c, z, pct) : hi;
                 var r2 = rIn + ((bandTop - lo) * scale).toNumber();
                 if (r2 > rOut) { r2 = rOut; }
                 if (r2 > prevR) {
