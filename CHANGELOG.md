@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.3 — 2026-07-03
+
+- Thicker fatigue (ATL) line: pen 4 in the load charts (matching the
+  fitness line), pen 3 in the combined glance chart, pen 4 in the
+  fatigue-only glance.
+
 ## v0.8.2 — 2026-07-03
 
 - **Fixed: form zone coloring now matches intervals.icu** (#1, thanks

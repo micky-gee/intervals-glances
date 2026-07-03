@@ -160,7 +160,7 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
         }
 
         if (mode != 1) {
-            drawMiniLine(dc, atl, lo, scale, x0, x1, y0, y1, ATL_COLOR, mode == 2 ? 3 : 2);
+            drawMiniLine(dc, atl, lo, scale, x0, x1, y0, y1, ATL_COLOR, mode == 2 ? 4 : 3);
         }
         if (mode != 2) {
             drawMiniLine(dc, ctl, lo, scale, x0, x1, y0, y1, CTL_COLOR, 3);

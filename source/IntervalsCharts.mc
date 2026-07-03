@@ -140,7 +140,7 @@ module IntervalsCharts {
             gv += step;
         }
 
-        drawPolyline(dc, atl, lo, hi, x0, x1, y0, y1, ATL_COLOR, 3);
+        drawPolyline(dc, atl, lo, hi, x0, x1, y0, y1, ATL_COLOR, 4);
         drawPolyline(dc, ctl, lo, hi, x0, x1, y0, y1, CTL_COLOR, 4);
     }
 
@@ -355,7 +355,7 @@ module IntervalsCharts {
             gv += step;
         }
 
-        drawPolarSeries(dc, atl, lo, hi, cx, cy, rIn, rOut, ATL_COLOR, 3);
+        drawPolarSeries(dc, atl, lo, hi, cx, cy, rIn, rOut, ATL_COLOR, 4);
         drawPolarSeries(dc, ctl, lo, hi, cx, cy, rIn, rOut, CTL_COLOR, 4);
     }
 
