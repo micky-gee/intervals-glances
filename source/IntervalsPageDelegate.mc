@@ -3,7 +3,8 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Normal mode: UP/DOWN (or swipe) cycles pages; START opens the zoom control
-// on chart pages, or forces a sync elsewhere.
+// on chart pages, starts the OAuth flow when not connected (or on the
+// migration page), or forces a sync elsewhere.
 // Zoom mode (chart pages only): UP/+ zooms in (fewer days), DOWN/- zooms out
 // (more days), touch taps the on-screen +/- halves, START or BACK closes it.
 class IntervalsPageDelegate extends WatchUi.BehaviorDelegate {
@@ -22,6 +23,11 @@ class IntervalsPageDelegate extends WatchUi.BehaviorDelegate {
             WatchUi.requestUpdate();
             return true;
         }
+        if (snoozeMigration()) {
+            // The migrate page just left the list; the old page 1 is now 0.
+            switchTo(0, WatchUi.SLIDE_UP);
+            return true;
+        }
         var n = IntervalsPages.count();
         switchTo((_page + 1) % n, WatchUi.SLIDE_UP);
         return true;
@@ -34,13 +40,25 @@ class IntervalsPageDelegate extends WatchUi.BehaviorDelegate {
             WatchUi.requestUpdate();
             return true;
         }
+        if (snoozeMigration()) {
+            switchTo(IntervalsPages.count() - 1, WatchUi.SLIDE_DOWN);
+            return true;
+        }
         var n = IntervalsPages.count();
         switchTo((_page + n - 1) % n, WatchUi.SLIDE_DOWN);
         return true;
     }
 
     function onSelect() as Boolean {
-        if (IntervalsPages.isChart(IntervalsPages.idAt(_page))) {
+        var id = IntervalsPages.idAt(_page);
+        if (!IntervalsSettings.isConnected() || id.equals("migrate")) {
+            // First-run connect, or the migration nudge's connect action.
+            IntervalsAuth.connect();
+        } else if (id.equals("d:status")
+            && IntervalsApi.ERR_RECONNECT.equals(IntervalsData.lastError())) {
+            // Token revoked / key dead: STATUS page offers re-linking.
+            IntervalsAuth.connect();
+        } else if (IntervalsPages.isChart(id)) {
             IntervalsRefresh.zoomActive = !IntervalsRefresh.zoomActive;
         } else {
             IntervalsRefresh.start();
@@ -55,6 +73,10 @@ class IntervalsPageDelegate extends WatchUi.BehaviorDelegate {
             WatchUi.requestUpdate();
             return true; // consume so the widget doesn't close
         }
+        // Deliberately does NOT snooze the migration nudge: BACK (and the
+        // system-driven exits that also arrive here) would otherwise hide it
+        // for days without the user ever choosing "later". Only an explicit
+        // UP/DOWN off the page snoozes it.
         return false; // default: leave the widget
     }
 
@@ -72,6 +94,16 @@ class IntervalsPageDelegate extends WatchUi.BehaviorDelegate {
         }
         WatchUi.requestUpdate();
         return true;
+    }
+
+    // If the user is leaving the migration page, snooze the nudge (it drops
+    // out of the page list). Returns true when that happened.
+    hidden function snoozeMigration() as Boolean {
+        if (IntervalsPages.idAt(_page).equals("migrate")) {
+            IntervalsData.migrationSnooze();
+            return true;
+        }
+        return false;
     }
 
     hidden function switchTo(page as Number, transition as WatchUi.SlideType) as Void {

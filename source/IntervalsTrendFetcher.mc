@@ -19,8 +19,7 @@ class IntervalsTrendFetcher {
     }
 
     function start() as Void {
-        var key = IntervalsSettings.apiKey();
-        if (key == null) {
+        if (IntervalsApi.options() == null) {
             _done.invoke(null);
             return;
         }
@@ -35,8 +34,8 @@ class IntervalsTrendFetcher {
             _done.invoke(IntervalsApi.finishSeries(_acc));
             return;
         }
-        var key = IntervalsSettings.apiKey();
-        if (key == null) {
+        var opts = IntervalsApi.options();
+        if (opts == null) {
             _done.invoke(null);
             return;
         }
@@ -48,7 +47,7 @@ class IntervalsTrendFetcher {
                 "newest" => ch[1],
                 "fields" => IntervalsApi.trendFields()
             },
-            IntervalsApi.options(key),
+            opts,
             method(:onChunk));
     }
 

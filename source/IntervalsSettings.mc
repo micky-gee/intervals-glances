@@ -1,4 +1,5 @@
 import Toybox.Application;
+import Toybox.Application.Storage;
 import Toybox.Lang;
 
 // User settings, readable from foreground, glance and background contexts.
@@ -11,6 +12,27 @@ module IntervalsSettings {
             return v;
         }
         return null;
+    }
+
+    // OAuth bearer token stored by IntervalsAuth after account linking.
+    // Storage is readable from glance and background on CIQ >= 3.2.
+    function oauthToken() as String? {
+        var v = Storage.getValue("oauth");
+        if (v instanceof Lang.String && v.length() > 0) {
+            return v;
+        }
+        return null;
+    }
+
+    // Either auth method works; the OAuth token wins when both exist.
+    function isConnected() as Boolean {
+        return oauthToken() != null || apiKey() != null;
+    }
+
+    // Legacy state: still on an API key with no linked account - the
+    // migration nudge targets exactly this.
+    function legacyKeyOnly() as Boolean {
+        return oauthToken() == null && apiKey() != null;
     }
 
     function athleteId() as String {

@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.9.0 — unreleased
+
+- **Link your intervals.icu account from the watch (OAuth).** Press START when
+  not connected: consent opens on your phone via Garmin Connect, scoped to
+  wellness data only — no more copying API keys. A minimal Cloudflare Worker
+  (`worker/`) performs the token exchange so the client secret never ships in
+  the app.
+- **API key entry is deprecated** and will be removed in v1.0. Existing key
+  users keep working and see a relink nudge page at most every 14 days
+  (START to connect, DOWN to snooze); the status page marks key auth as
+  "legacy".
+- 401/403 now surfaces as "Reconnect intervals.icu"; pressing START on the
+  status page re-runs the link flow.
+- Project site, privacy policy and OAuth redirect page under `docs/`
+  (GitHub Pages).
+
 ## v0.8.3 — 2026-07-03
 
 - Thicker fatigue (ATL) line: pen 4 in the load charts (matching the

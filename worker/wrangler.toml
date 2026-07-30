@@ -1,0 +1,8 @@
+name = "intervals-oauth"
+main = "oauth-exchange.js"
+compatibility_date = "2026-07-01"
+
+[vars]
+# Public values; the secret is NOT set here (see README).
+INTERVALS_CLIENT_ID = "SET_AFTER_REGISTRATION"
+REDIRECT_URI = "https://micky-gee.github.io/intervals-glances/oauth-done.html"

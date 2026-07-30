@@ -25,7 +25,9 @@ class IntervalsWidgetView extends WatchUi.View {
         var pages = IntervalsPages.list();
         var id = pages[_page < pages.size() ? _page : 0] as String;
 
-        if (id.find("g:") == 0) {
+        if (id.equals("migrate")) {
+            drawMigratePage(dc);
+        } else if (id.find("g:") == 0) {
             var round = id.substring(2, 3).equals("r");
             var type = id.substring(4, id.length());
             if (type.equals("load")) {
@@ -63,6 +65,33 @@ class IntervalsWidgetView extends WatchUi.View {
         } else {
             drawTilesPage(dc, "STATUS", statusItems());
         }
+    }
+
+    // Nudge for API-key users to link their account via OAuth. Paging away
+    // snoozes it for MIGRATION_SNOOZE_DAYS (handled in the delegate).
+    hidden function drawMigratePage(dc as Dc) as Void {
+        var w = dc.getWidth();
+        var h = dc.getHeight();
+        var cx = w / 2;
+
+        drawHeader(dc, "INTERVALS.ICU");
+
+        IntervalsUi.drawFit(dc, cx, h * 34 / 100, "New: link your",
+            w * 64 / 100, w * 8 / 100, Graphics.COLOR_WHITE,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        IntervalsUi.drawFit(dc, cx, h * 43 / 100, "account by OAuth -",
+            w * 64 / 100, w * 8 / 100, Graphics.COLOR_WHITE,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        IntervalsUi.drawFit(dc, cx, h * 52 / 100, "no more API key",
+            w * 64 / 100, w * 8 / 100, Graphics.COLOR_WHITE,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        IntervalsUi.drawFit(dc, cx, h * 68 / 100, "START  connect",
+            w * 50 / 100, w * 6 / 100, IntervalsUi.MINT,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        IntervalsUi.drawFit(dc, cx, h * 76 / 100, "DOWN  later",
+            w * 50 / 100, w * 6 / 100, IntervalsUi.DIM,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Shown only when every page is set to "off".
@@ -109,6 +138,17 @@ class IntervalsWidgetView extends WatchUi.View {
         if (isPlus) {
             dc.fillRoundedRectangle(cx - thick / 2, cy - half, thick, 2 * half, thick / 2);
         }
+    }
+
+    // Header label with the transient states layered on top.
+    hidden function busyLabel(title as String) as String {
+        if (IntervalsAuth.busy()) {
+            return "CONNECTING...";
+        }
+        if (IntervalsRefresh.isBusy()) {
+            return "SYNCING...";
+        }
+        return title;
     }
 
     hidden function windowLabel() as String {
@@ -219,7 +259,7 @@ class IntervalsWidgetView extends WatchUi.View {
 
         var zone = IntervalsData.formZoneColor();
         IntervalsUi.drawFit(dc, cx, cy - h * 172 / 1000,
-            IntervalsRefresh.isBusy() ? "SYNCING..." : "LOAD " + windowLabel(),
+            busyLabel("LOAD " + windowLabel()),
             w * 42 / 100, w * 53 / 1000, IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         IntervalsUi.drawFit(dc, cx, cy - h * 31 / 1000, IntervalsData.formText(),
@@ -343,7 +383,7 @@ class IntervalsWidgetView extends WatchUi.View {
         }
         var fmtStr = "%." + dec + "f";
         IntervalsUi.drawFit(dc, cx, cy - h * 172 / 1000,
-            IntervalsRefresh.isBusy() ? "SYNCING..." : label,
+            busyLabel(label),
             w * 42 / 100, w * 62 / 1000, color,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         IntervalsUi.drawFit(dc, cx, cy - h * 18 / 1000, cur.format(fmtStr),
@@ -453,12 +493,23 @@ class IntervalsWidgetView extends WatchUi.View {
         return [
             ["UPDATED", IntervalsData.ageText(), "ago", IntervalsUi.SLATE],
             ["ATHLETE", IntervalsSettings.athleteId(), "", IntervalsUi.SLATE],
-            ["API KEY", IntervalsSettings.apiKey() != null ? "set" : "missing", "", IntervalsUi.SLATE],
+            authItem(),
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.8.3", "", IntervalsUi.SLATE]
+            ["VERSION", "0.9.0", "", IntervalsUi.SLATE]
         ];
+    }
+
+    // OAuth (mint) / legacy API key (amber) / not connected (coral).
+    hidden function authItem() as Array {
+        if (IntervalsSettings.oauthToken() != null) {
+            return ["AUTH", "OAuth", "", IntervalsUi.SLATE, IntervalsUi.MINT];
+        }
+        if (IntervalsSettings.apiKey() != null) {
+            return ["AUTH", "API key", "legacy", IntervalsUi.SLATE, IntervalsUi.AMBER];
+        }
+        return ["AUTH", "none", "", IntervalsUi.SLATE, IntervalsUi.CORAL];
     }
 
     hidden function dataDate() as String {
@@ -496,15 +547,15 @@ class IntervalsWidgetView extends WatchUi.View {
 
     hidden function drawHeader(dc as Dc, title as String) as Void {
         IntervalsUi.drawFit(dc, dc.getWidth() / 2, dc.getHeight() * 11 / 100,
-            IntervalsRefresh.isBusy() ? "SYNCING..." : title,
+            busyLabel(title),
             dc.getWidth() * 62 / 100, dc.getWidth() * 57 / 1000, 0x55AAFF,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     hidden function drawEmptyState(dc as Dc) as Void {
         var msg;
-        if (IntervalsSettings.apiKey() == null) {
-            msg = "Set API key in\nConnect IQ settings";
+        if (!IntervalsSettings.isConnected()) {
+            msg = "Press START to connect\nintervals.icu";
         } else {
             var err = IntervalsData.lastError();
             msg = err != null ? err : "Waiting for data...\nPress START to sync";

@@ -30,14 +30,28 @@ module IntervalsApi {
         return "https://intervals.icu/api/v1/athlete/" + athleteId + "/wellness";
     }
 
-    function options(apiKey as String) as Dictionary {
-        var b64 = StringUtil.convertEncodedString("API_KEY:" + apiKey, {
-            :fromRepresentation => StringUtil.REPRESENTATION_STRING_PLAIN_TEXT,
-            :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64
-        });
+    // Request options for the active auth method: Bearer when an OAuth
+    // token is linked, else Basic with the (legacy) API key. Null when
+    // neither is configured.
+    function options() as Dictionary? {
+        var auth;
+        var token = IntervalsSettings.oauthToken();
+        if (token != null) {
+            auth = "Bearer " + token;
+        } else {
+            var apiKey = IntervalsSettings.apiKey();
+            if (apiKey == null) {
+                return null;
+            }
+            var b64 = StringUtil.convertEncodedString("API_KEY:" + apiKey, {
+                :fromRepresentation => StringUtil.REPRESENTATION_STRING_PLAIN_TEXT,
+                :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64
+            });
+            auth = "Basic " + b64;
+        }
         return {
             :method => Communications.HTTP_REQUEST_METHOD_GET,
-            :headers => { "Authorization" => "Basic " + b64 },
+            :headers => { "Authorization" => auth },
             :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON
         };
     }
@@ -213,9 +227,11 @@ module IntervalsApi {
     }
 
     // Map makeWebRequest response codes to a short user-facing message.
+    const ERR_RECONNECT = "Reconnect intervals.icu";
+
     function errorText(code as Number) as String {
         if (code == 401 || code == 403) {
-            return "Bad API key";
+            return ERR_RECONNECT;
         }
         if (code == 404) {
             return "Bad athlete ID";

@@ -33,26 +33,34 @@ More: [eFTP](docs/screenshots/05-eftp-ring.png) ·
   time-varying form-zone bands (transition / fresh / grey / optimal /
   high-risk), computed per angle step from interpolated CTL. The display
   range auto-fits the data and band envelope; labeled value arcs and 30-day
-  spokes keep it readable. A rectangular variant is available via the
-  **Round charts** toggle.
-- **Up to four configurable metric charts** — three line/ring slots plus a
-  dedicated ring slot, each choosing from 17 metrics: HRV (rMSSD/SDNN),
-  resting/sleeping HR, ramp rate, eFTP, weight, body fat, VO2max, sleep
-  score/hours, readiness, steps, SpO2, respiration, Baevsky stress index,
-  calories. Radial bar rings (newest day highlighted) or auto-scaled line
-  charts with gap handling for sparse data.
-- **Stat tile pages** — recovery, sleep, body, fuel and subjective wellness
-  rendered as a modern tile grid with vector fonts auto-fitted to their
-  space (no clipped or colliding text on the round display).
-- **Status page** — last sync, athlete, API key state, errors.
+  spokes keep it readable. Every graph page can render round (radial) or
+  rectangular, per page.
+- **Four configurable graph pages** — each picks the load chart or one of 17
+  metrics: HRV (rMSSD/SDNN), resting/sleeping HR, ramp rate, eFTP, weight,
+  body fat, VO2max, sleep score/hours, readiness, steps, SpO2, respiration,
+  Baevsky stress index, calories. Radial bar rings (newest day highlighted)
+  or auto-scaled line charts with gap handling for sparse data; HRV charts
+  add a personal baseline band with deviation-colored bars.
+- **Interactive zoom** — START on any graph page shows +/- controls beside
+  the UP/DOWN buttons: zoom the window between 7 and 90 days, rescaling
+  instantly from cached data (works offline). Narrow windows render as
+  smooth interpolated curves.
+- **Four configurable data pages** — form, recovery, sleep, body, fuel,
+  subjective wellness or status, rendered as a modern tile grid with vector
+  fonts auto-fitted to their space (no clipped or colliding text on the
+  round display).
+- **Status page** — last sync, athlete, auth method, errors.
 - **Sync** — a background service polls hourly; opening the widget refreshes
   data older than 15 minutes; START forces a sync. The trend window is
   fetched in 30-day chunks to stay inside the watch's HTTP response limit.
 
 ## Requirements
 
-- A free [intervals.icu](https://intervals.icu) account and its API key
-  (intervals.icu → Settings → Developer Settings).
+- A free [intervals.icu](https://intervals.icu) account. Link it from the
+  watch (press START on first run — OAuth consent opens on your phone via
+  Garmin Connect). An API key (intervals.icu → Settings → Developer Settings)
+  still works as a legacy fallback, but is deprecated and will be removed in
+  v1.0.
 - Garmin Connect IQ SDK ≥ 6 (built with 9.2) and a Java runtime
   (`brew install --cask connectiq` and `brew install openjdk` on macOS).
 - Device files for `fenix8pro47mm`, downloaded once via the Connect IQ SDK
@@ -92,15 +100,15 @@ watch; the glance appears in the carousel.
 
 | Setting | Default | Notes |
 |---|---|---|
-| intervals.icu API key | – | from intervals.icu Developer Settings |
-| Athlete ID | `0` | `0` = the key's owner; coaches can use `i12345` IDs |
+| API key (legacy) | – | deprecated; link your account from the watch instead |
+| Athlete ID | `0` | `0` = the account owner; coaches can use `i12345` IDs |
 | Glance display | fit+fat+form | or fitness / fatigue / form only |
 | Form as % of fitness | off | switches the form value AND zone scale; off = absolute TSB points (intervals.icu default) |
-| Round charts | on | polar load chart + ring metric charts |
-| Chart window | 3 months | 6 weeks / 3 months / 6 months |
-| Chart 1–3 | HRV, ramp rate, eFTP | line/ring chart slots |
-| Ring chart | steps | dedicated radial bar chart |
-| Show … page | all on | hide form / recovery / sleep / body / fuel / feel / status |
+| Graph 1–4 | load, HRV, eFTP, steps | off / load / any of 17 metrics, each with its own round-or-rectangular toggle |
+| Data page 1–4 | form, recovery, sleep, body | off / form / recovery / sleep / body / fuel / feel / status |
+
+The chart time window is not a setting — zoom it live with START then
+UP/DOWN on any graph page.
 
 ## Simulator
 
@@ -118,8 +126,12 @@ filesystem if changed property defaults don't seem to apply.
 
 ## How it talks to intervals.icu
 
-Authentication is HTTP Basic with the literal username `API_KEY` and your
-personal key as the password. Two request flavors hit
+Authentication is OAuth2 (scope `WELLNESS:READ`): the watch opens the
+consent page through Garmin Connect Mobile, and a small Cloudflare Worker
+(`worker/`) exchanges the one-time code for a long-lived bearer token — the
+client secret never ships in the app. Legacy API keys still work via HTTP
+Basic (username `API_KEY`) until v1.0; existing key users see a gentle
+relink nudge every 14 days. Two request flavors hit
 `GET /api/v1/athlete/{id}/wellness` with a `fields=` filter (which also
 strips nulls, keeping payloads small for the watch):
 

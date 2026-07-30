@@ -23,7 +23,7 @@ module IntervalsRefresh {
     }
 
     function start() as Void {
-        if (isBusy() || IntervalsSettings.apiKey() == null) {
+        if (isBusy() || !IntervalsSettings.isConnected()) {
             return;
         }
         // Don't hammer the API when something keeps failing.
@@ -34,6 +34,13 @@ module IntervalsRefresh {
         _lastAttempt = now;
         _fetcher = new Fetcher();
         _fetcher.start();
+    }
+
+    // Immediate refresh that skips the retry backoff - used right after the
+    // OAuth flow completes so new data appears without waiting.
+    function startNow() as Void {
+        _lastAttempt = 0;
+        start();
     }
 
     // Refresh if never synced, data is older than 15 minutes, or the chart
@@ -75,15 +82,15 @@ module IntervalsRefresh {
         }
 
         function start() as Void {
-            var key = IntervalsSettings.apiKey();
-            if (key == null) {
+            var opts = IntervalsApi.options();
+            if (opts == null) {
                 return;
             }
             busy = true;
             Communications.makeWebRequest(
                 IntervalsApi.wellnessUrl(IntervalsSettings.athleteId()),
                 IntervalsApi.recentParams(),
-                IntervalsApi.options(key),
+                opts,
                 method(:onRecent));
         }
 

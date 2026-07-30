@@ -10,6 +10,11 @@ module IntervalsPages {
 
     function list() as Array {
         var p = [];
+        // Migration nudge for API-key users leads, when due; paging away
+        // snoozes it (IntervalsPageDelegate records the snooze).
+        if (IntervalsData.migrationDue()) {
+            p.add("migrate");
+        }
         for (var i = 1; i <= IntervalsSettings.GRAPH_PAGES; i++) {
             var t = IntervalsSettings.graphType(i);
             if (!t.equals("off")) {

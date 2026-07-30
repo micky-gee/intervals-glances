@@ -103,6 +103,26 @@ module IntervalsData {
         return null;
     }
 
+    // ---- API-key -> OAuth migration nudge ---------------------------------
+    // Users still on an API key (and not yet linked) see a migration page at
+    // most once every MIGRATION_SNOOZE_DAYS; paging away snoozes it.
+    const MIGRATION_SNOOZE_DAYS = 14;
+
+    function migrationDue() as Boolean {
+        if (!IntervalsSettings.legacyKeyOnly()) {
+            return false;
+        }
+        var last = Storage.getValue("migLast");
+        if (last instanceof Lang.Number) {
+            return Time.now().value() - last > MIGRATION_SNOOZE_DAYS * 86400;
+        }
+        return true;
+    }
+
+    function migrationSnooze() as Void {
+        Storage.setValue("migLast", Time.now().value());
+    }
+
     // Seconds since the last successful sync, or null if never synced.
     function ageSecs() as Number? {
         var d = data();

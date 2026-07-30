@@ -18,15 +18,15 @@ class IntervalsServiceDelegate extends System.ServiceDelegate {
     }
 
     function onTemporalEvent() as Void {
-        var key = IntervalsSettings.apiKey();
-        if (key == null) {
-            Background.exit({ "err" => "Set API key" });
+        var opts = IntervalsApi.options();
+        if (opts == null) {
+            Background.exit({ "err" => "Not connected" });
             return;
         }
         Communications.makeWebRequest(
             IntervalsApi.wellnessUrl(IntervalsSettings.athleteId()),
             IntervalsApi.recentParams(),
-            IntervalsApi.options(key),
+            opts,
             method(:onRecent));
     }
 
