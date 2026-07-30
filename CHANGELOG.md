@@ -1,6 +1,32 @@
 # Changelog
 
-## v0.9.0 — unreleased
+## v0.9.2 — 2026-07-30
+
+- **The status page can always start OAuth linking**: press START there
+  whenever the account isn't linked, and a "Press START to link OAuth" prompt
+  now advertises it. Previously the only entry points were first-run setup, the
+  migration nudge, and a reconnect error — so anyone who had snoozed the nudge
+  was locked out of linking for 14 days. (Enable a Status data page in settings
+  to reach it.)
+
+## v0.9.1 — 2026-07-30 (beta)
+
+- **Fixed: OAuth never completed on real watches.** Garmin Connect Mobile only
+  captures the result when the consent page redirects to `http://localhost`
+  (it watches for that navigation and never loads it), so our hosted redirect
+  URL was silently ignored on hardware — the simulator was more permissive,
+  which masked the bug. Both the authorize request and the token exchange now
+  use `http://localhost`.
+- **Fixed: "CONNECTING…" could latch forever.** The connecting state now times
+  out after 3 minutes, so START always works again after an abandoned or failed
+  login.
+- OAuth registration moved to app start: per Garmin's docs, a login finished
+  after the widget times out is cached and delivered on the next registration,
+  so it now completes on next open instead of being lost.
+- While linking, the app directs the user to open Garmin Connect on the phone
+  (previously it showed only a bare "CONNECTING…").
+
+## v0.9.0 — 2026-07-30 (beta)
 
 - **Link your intervals.icu account from the watch (OAuth).** Press START when
   not connected: consent opens on your phone via Garmin Connect, scoped to
@@ -10,9 +36,10 @@
 - **API key entry is deprecated** and will be removed in v1.0. Existing key
   users keep working and see a relink nudge page at most every 14 days
   (START to connect, DOWN to snooze); the status page marks key auth as
-  "legacy".
-- 401/403 now surfaces as "Reconnect intervals.icu"; pressing START on the
-  status page re-runs the link flow.
+  "legacy" in amber.
+- 401/403 now surfaces as "Reconnect intervals.icu". Note intervals.icu answers
+  bad OAuth client credentials with HTTP 404, so exchange failures report
+  "Connect failed" rather than being mapped as API errors.
 - Project site, privacy policy and OAuth redirect page under `docs/`
   (GitHub Pages).
 

@@ -30,6 +30,9 @@ class IntervalsApp extends Application.AppBase {
 
     function getInitialView() {
         scheduleBackground();
+        // Registering here also delivers any OAuth result Garmin cached while
+        // the widget was closed during phone-side login.
+        IntervalsAuth.init();
         return [new IntervalsWidgetView(0), new IntervalsPageDelegate(0)];
     }
 

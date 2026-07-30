@@ -54,9 +54,10 @@ class IntervalsPageDelegate extends WatchUi.BehaviorDelegate {
         if (!IntervalsSettings.isConnected() || id.equals("migrate")) {
             // First-run connect, or the migration nudge's connect action.
             IntervalsAuth.connect();
-        } else if (id.equals("d:status")
-            && IntervalsApi.ERR_RECONNECT.equals(IntervalsData.lastError())) {
-            // Token revoked / key dead: STATUS page offers re-linking.
+        } else if (id.equals("d:status") && IntervalsSettings.oauthToken() == null) {
+            // The status page is the always-available way to link: legacy key
+            // users can reach it even while the migration nudge is snoozed,
+            // and it doubles as the recovery path for a revoked token.
             IntervalsAuth.connect();
         } else if (IntervalsPages.isChart(id)) {
             IntervalsRefresh.zoomActive = !IntervalsRefresh.zoomActive;

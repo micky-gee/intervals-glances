@@ -6,4 +6,7 @@ compatibility_date = "2026-07-01"
 # Public values only. NEVER put the client secret here - this file is
 # committed. Set it with: wrangler secret put INTERVALS_CLIENT_SECRET
 INTERVALS_CLIENT_ID = "649"
-REDIRECT_URI = "https://micky-gee.github.io/intervals-glances/oauth-done.html"
+# Must match the redirect the watch sends. Garmin Connect Mobile requires
+# http://localhost for Communications.makeOAuthRequest (it intercepts that
+# navigation), so the authorize and token calls both use it.
+REDIRECT_URI = "http://localhost"

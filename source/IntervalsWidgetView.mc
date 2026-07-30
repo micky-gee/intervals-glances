@@ -64,7 +64,22 @@ class IntervalsWidgetView extends WatchUi.View {
             drawTilesPage(dc, "HOW YOU FEEL", feelItems());
         } else {
             drawTilesPage(dc, "STATUS", statusItems());
+            drawLinkHint(dc);
         }
+    }
+
+    // The status page is the always-available entry point for OAuth linking
+    // (reachable even when the migration nudge is snoozed), so it advertises
+    // the action whenever the account isn't linked yet.
+    hidden function drawLinkHint(dc as Dc) as Void {
+        if (IntervalsSettings.oauthToken() != null) {
+            return;
+        }
+        IntervalsUi.drawFit(dc, dc.getWidth() / 2, dc.getHeight() * 89 / 100,
+            IntervalsAuth.busy() ? "Open Garmin Connect on phone"
+                : "Press START to link OAuth",
+            dc.getWidth() * 70 / 100, dc.getWidth() * 52 / 1000, IntervalsUi.MINT,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Nudge for API-key users to link their account via OAuth. Paging away
@@ -86,6 +101,15 @@ class IntervalsWidgetView extends WatchUi.View {
             w * 64 / 100, w * 8 / 100, Graphics.COLOR_WHITE,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
+        if (IntervalsAuth.busy()) {
+            IntervalsUi.drawFit(dc, cx, h * 70 / 100, "Open Garmin Connect",
+                w * 62 / 100, w * 6 / 100, IntervalsUi.MINT,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            IntervalsUi.drawFit(dc, cx, h * 78 / 100, "on your phone",
+                w * 62 / 100, w * 6 / 100, IntervalsUi.MINT,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            return;
+        }
         IntervalsUi.drawFit(dc, cx, h * 68 / 100, "START  connect",
             w * 50 / 100, w * 6 / 100, IntervalsUi.MINT,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -497,7 +521,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.9.0", "", IntervalsUi.SLATE]
+            ["VERSION", "0.9.2", "", IntervalsUi.SLATE]
         ];
     }
 
@@ -554,7 +578,11 @@ class IntervalsWidgetView extends WatchUi.View {
 
     hidden function drawEmptyState(dc as Dc) as Void {
         var msg;
-        if (!IntervalsSettings.isConnected()) {
+        if (IntervalsAuth.busy()) {
+            // Garmin's OAuth flow happens in the phone app; the docs require
+            // pointing the user there.
+            msg = "Open Garmin Connect\non your phone to sign in";
+        } else if (!IntervalsSettings.isConnected()) {
             msg = "Press START to connect\nintervals.icu";
         } else {
             var err = IntervalsData.lastError();
