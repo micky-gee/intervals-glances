@@ -11,10 +11,11 @@ import Toybox.WatchUi;
 // secret (see worker/README.md), and stores the token. Foreground only.
 module IntervalsAuth {
 
-    // Set after registering with intervals.icu and deploying the Worker.
-    const CLIENT_ID = "SET_AFTER_REGISTRATION";
+    // Registered with intervals.icu; the matching client secret lives only in
+    // the Worker (see worker/README.md), never in the app.
+    const CLIENT_ID = "649";
     const REDIRECT_URL = "https://micky-gee.github.io/intervals-glances/oauth-done.html";
-    const EXCHANGE_URL = "https://intervals-oauth.CHANGE-ME.workers.dev/";
+    const EXCHANGE_URL = "https://intervals-oauth.micky-gee.workers.dev/";
 
     var _flow as Flow? = null;
 
@@ -85,9 +86,12 @@ module IntervalsAuth {
                 System.println("oauth: connected");
                 IntervalsRefresh.startNow();
             } else {
+                // Only BLE-level failures (negative codes) get the specific
+                // text; intervals.icu answers bad client credentials with a
+                // 404, so HTTP statuses must not be mapped as API errors here.
                 System.println("oauth: exchange failed " + code);
                 Storage.setValue("err",
-                    code == 200 ? "Connect failed" : IntervalsApi.errorText(code));
+                    code < 0 ? IntervalsApi.errorText(code) : "Connect failed");
             }
             WatchUi.requestUpdate();
         }

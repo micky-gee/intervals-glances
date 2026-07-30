@@ -8,3 +8,6 @@ developer_key.der
 *.orig
 .claude/
 dist/
+worker/README.md
+.wrangler/
+worker/node_modules/

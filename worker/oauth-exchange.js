@@ -7,11 +7,10 @@
 //
 // Deploy: see worker/README.md.
 
-const TOKEN_URLS = [
-  // Forum-documented path first; fall back to the versioned path.
-  "https://intervals.icu/api/oauth/token",
-  "https://intervals.icu/api/v1/oauth/token",
-];
+// Verified live: this is the only working path. Note intervals.icu answers
+// bad client credentials with HTTP 404 and a descriptive body ("Client and/or
+// secret not found"), so never treat a 404 here as a wrong URL.
+const TOKEN_URL = "https://intervals.icu/api/oauth/token";
 
 export default {
   async fetch(request, env) {
@@ -43,17 +42,11 @@ export default {
       grant_type: "authorization_code",
     });
 
-    let upstream = null;
-    for (const url of TOKEN_URLS) {
-      upstream = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: body.toString(),
-      });
-      if (upstream.status !== 404) {
-        break;
-      }
-    }
+    const upstream = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
 
     // Pass intervals.icu's response through (success JSON contains
     // access_token; failures keep their status so the watch can report them).
