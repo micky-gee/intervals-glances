@@ -4,20 +4,27 @@ import Toybox.Time.Gregorian;
 import Toybox.Communications;
 import Toybox.StringUtil;
 
-// Request building and response parsing for the intervals.icu API.
-// Included in the background context and (implicitly) the foreground app.
+// Request building for the intervals.icu API. One shape of request serves
+// everything: a date window with a field filter. Syncs normally ask for the
+// last day or two and merge the result into the cache (IntervalsCache), since
+// past wellness days are immutable.
 (:background)
 module IntervalsApi {
 
-    const RECENT_DAYS = 7;
+    // Days of history a fresh cache loads. The rest is fetched only if the
+    // user zooms past it (IntervalsData.MAX_ZOOM).
+    const INITIAL_HIST = 30;
+    const MAX_HIST = 90;
 
-    // The trend window is always fetched at its maximum so the interactive
-    // zoom (7..90 days) can rescale instantly from cached data without a
-    // refetch. Must match IntervalsData.MAX_ZOOM.
-    const MAX_DAYS = 90;
+    // Days re-fetched on every sync: today always changes, and yesterday can
+    // still be edited or arrive late.
+    const DELTA_DAYS = 1;
 
-    // Wellness fields shown on the metric pages. Asking the server to filter
-    // keeps the JSON small enough for the background memory pool.
+    // A single response must stay inside the watch's HTTP buffer (error -402
+    // beyond roughly a month of wide records).
+    const CHUNK_DAYS = 30;
+
+    // Wellness fields shown on the tile pages.
     const FIELDS_RECENT =
         "id,ctl,atl,rampRate," +
         "restingHR,hrv,hrvSDNN,avgSleepingHR,readiness,baevskySI," +
@@ -61,22 +68,40 @@ module IntervalsApi {
         return g.year.format("%04d") + "-" + g.month.format("%02d") + "-" + g.day.format("%02d");
     }
 
-    function rangeParams(days as Number, fields as String) as Dictionary {
-        var today = Time.today();
-        var oldest = today.add(new Time.Duration(-(days - 1) * 86400));
-        return {
-            "oldest" => dateStr(oldest),
-            "newest" => dateStr(today),
-            "fields" => fields
-        };
+    // ---- day indices ------------------------------------------------------
+    // Cache merging aligns everything by day number. Only differences between
+    // indices are used, and the +43200 rounds to the nearest day so a DST
+    // shift can't move a date across a boundary.
+    function dayIdxOf(moment as Time.Moment) as Number {
+        return (moment.value() + 43200) / 86400;
     }
 
-    function recentParams() as Dictionary {
-        return rangeParams(RECENT_DAYS, FIELDS_RECENT);
+    function todayIdx() as Number {
+        return dayIdxOf(Time.today());
     }
 
-    // Metric keys needing trend series: the metric graph pages, excluding
-    // "off" and "load" (ctl/atl are always fetched), deduplicated.
+    // Day index of an API date string ("YYYY-MM-DD"), or null if malformed.
+    function dayIdxOfDate(s) as Number? {
+        if (!(s instanceof Lang.String) || s.length() < 10) {
+            return null;
+        }
+        var y = s.substring(0, 4).toNumber();
+        var m = s.substring(5, 7).toNumber();
+        var d = s.substring(8, 10).toNumber();
+        if (y == null || m == null || d == null) {
+            return null;
+        }
+        return dayIdxOf(Gregorian.moment({ :year => y, :month => m, :day => d }));
+    }
+
+    function momentDaysBack(days as Number) as Time.Moment {
+        return Time.today().add(new Time.Duration(-days * 86400));
+    }
+
+    // ---- fields -----------------------------------------------------------
+
+    // Metric keys backing the configured graph pages, excluding "off" and
+    // "load" (ctl/atl always come along), deduplicated.
     function selectedChartKeys() as Array {
         var keys = [];
         for (var i = 1; i <= IntervalsSettings.GRAPH_PAGES; i++) {
@@ -99,39 +124,17 @@ module IntervalsApi {
         return key;
     }
 
-    function trendFields() as String {
-        var fields = ["id", "ctl", "atl"];
+    // Everything one sync needs: tile fields plus the graph metrics.
+    function unionFields() as String {
+        var f = FIELDS_RECENT;
         var keys = selectedChartKeys();
         for (var i = 0; i < keys.size(); i++) {
             var src = chartSourceField(keys[i]);
-            if (fields.indexOf(src) < 0) {
-                fields.add(src);
+            if (f.find(src) == null) {
+                f += "," + src;
             }
         }
-        var f = "";
-        for (var i = 0; i < fields.size(); i++) {
-            f += (i > 0 ? "," : "") + fields[i];
-        }
         return f;
-    }
-
-    // The full window in <=30 day chunks ([oldest, newest] date pairs,
-    // oldest chunk first) so no single response trips the watch's
-    // makeWebRequest size limit (error -402).
-    function trendChunks() as Array {
-        var days = MAX_DAYS;
-        var today = Time.today();
-        var chunks = [];
-        var start = -(days - 1);
-        while (start <= 0) {
-            var end = start + 29 < 0 ? start + 29 : 0;
-            chunks.add([
-                dateStr(today.add(new Time.Duration(start * 86400))),
-                dateStr(today.add(new Time.Duration(end * 86400)))
-            ]);
-            start = end + 1;
-        }
-        return chunks;
     }
 
     // Per-day chart value for a key, with derivations; null when absent.
@@ -156,79 +159,28 @@ module IntervalsApi {
         return v == null ? null : v.toFloat();
     }
 
-    // Collapse a date-ascending list of wellness records into one dictionary
-    // holding the most recent non-null value for every field.
-    function summarize(records as Array) as Dictionary {
-        var w = {};
-        for (var i = 0; i < records.size(); i++) {
-            var r = records[i];
-            if (!(r instanceof Lang.Dictionary)) {
-                continue;
-            }
-            var keys = r.keys();
-            for (var k = 0; k < keys.size(); k++) {
-                var key = keys[k];
-                var v = r[key];
-                if (v != null && !key.equals("id")) {
-                    w[key] = v;
-                }
-            }
-            if (r["ctl"] != null && r["id"] != null) {
-                w["_date"] = r["id"];
-            }
+    // ---- request windows --------------------------------------------------
+
+    // Split the inclusive window [fromDaysBack .. toDaysBack] days before
+    // today into request-sized chunks, oldest first. Most syncs produce one.
+    function windowChunks(fromDaysBack as Number, toDaysBack as Number) as Array {
+        var chunks = [];
+        var start = -fromDaysBack;
+        var last = -toDaysBack;
+        while (start <= last) {
+            var stop = start + (CHUNK_DAYS - 1) < last ? start + (CHUNK_DAYS - 1) : last;
+            chunks.add([
+                dateStr(Time.today().add(new Time.Duration(start * 86400))),
+                dateStr(Time.today().add(new Time.Duration(stop * 86400)))
+            ]);
+            start = stop + 1;
         }
-        return w;
+        return chunks;
     }
 
-    // Trend series accumulate across chunked requests: ctl/atl are
-    // gap-filled; chart keys preserve nulls so sparse data charts as points.
-    function initSeriesAcc() as Dictionary {
-        var keys = selectedChartKeys();
-        var acc = {
-            "ctl" => [], "atl" => [],
-            "_keys" => keys, "_lc" => 0.0, "_la" => 0.0
-        };
-        for (var i = 0; i < keys.size(); i++) {
-            acc[keys[i]] = [];
-        }
-        return acc;
-    }
-
-    function appendSeries(acc as Dictionary, records as Array) as Void {
-        var keys = acc["_keys"] as Array;
-        var lastCtl = acc["_lc"] as Float;
-        var lastAtl = acc["_la"] as Float;
-        var ctl = acc["ctl"] as Array;
-        var atl = acc["atl"] as Array;
-        for (var i = 0; i < records.size(); i++) {
-            var r = records[i];
-            if (!(r instanceof Lang.Dictionary)) {
-                continue;
-            }
-            var c = r["ctl"];
-            var a = r["atl"];
-            if (c != null) { lastCtl = c.toFloat(); }
-            if (a != null) { lastAtl = a.toFloat(); }
-            ctl.add(lastCtl);
-            atl.add(lastAtl);
-            for (var k = 0; k < keys.size(); k++) {
-                (acc[keys[k]] as Array).add(extractValue(r, keys[k]));
-            }
-        }
-        acc["_lc"] = lastCtl;
-        acc["_la"] = lastAtl;
-    }
-
-    function finishSeries(acc as Dictionary) as Dictionary {
-        acc.remove("_keys");
-        acc.remove("_lc");
-        acc.remove("_la");
-        return acc;
-    }
-
-    // Map makeWebRequest response codes to a short user-facing message.
     const ERR_RECONNECT = "Reconnect intervals.icu";
 
+    // Map makeWebRequest response codes to a short user-facing message.
     function errorText(code as Number) as String {
         if (code == 401 || code == 403) {
             return ERR_RECONNECT;

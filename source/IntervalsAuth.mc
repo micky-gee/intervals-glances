@@ -119,6 +119,9 @@ module IntervalsAuth {
             if (token instanceof Lang.String && token.length() > 0) {
                 Storage.setValue("oauth", token);
                 Storage.deleteValue("err");
+                // A backoff earned by the old credential must not stall the
+                // first sync of the account just linked.
+                IntervalsCache.clearAuthFailure();
                 System.println("oauth: connected");
                 IntervalsRefresh.startNow();
             } else {

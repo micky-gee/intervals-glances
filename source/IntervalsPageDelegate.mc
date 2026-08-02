@@ -20,6 +20,10 @@ class IntervalsPageDelegate extends WatchUi.BehaviorDelegate {
     function onNextPage() as Boolean {
         if (IntervalsRefresh.zoomActive) {
             IntervalsData.zoomOut();
+            if (IntervalsData.needsBackfill()) {
+                // Zoomed past the cached span: fetch the older days once.
+                IntervalsRefresh.backfillHistory();
+            }
             WatchUi.requestUpdate();
             return true;
         }

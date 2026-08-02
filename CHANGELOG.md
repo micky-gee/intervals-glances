@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.10.0 — 2026-08-02
+
+Roughly a **10x cut in intervals.icu API usage** (~58 → ~5 requests per user per
+day), lifting the ceiling the 8,000/day limit imposes from ~140 users to well over
+a thousand. No change to what you see; syncs now land closer to when data actually
+changes.
+
+- **Delta sync.** Past wellness days are immutable, so a sync now fetches only
+  yesterday and today — **one request** — and merges it into the cache, instead of
+  re-downloading 90 days of history every time (four requests). The window widens
+  automatically if the watch has been offline.
+- **Event-driven instead of hourly polling.** Syncs are scheduled by the events
+  that matter — waking (overnight HRV/sleep/resting HR) and finishing an activity
+  (training load) — with a ~6 h safety net. Each event schedules the sync a little
+  later (~45 min after wake, ~20 min after an activity) so the data has time to
+  reach intervals.icu via Garmin Connect, and every delay is jittered per watch.
+- **Progressive history**: 30 days on first load; the older 60 days are fetched
+  once, only if you zoom past 30 days.
+- **Backoff on authentication failures.** A revoked key or token used to retry
+  every hour indefinitely; it now backs off (and can never block a newly linked
+  account).
+- Widget-open refresh threshold relaxed from 15 minutes to 2 hours.
+
 ## v0.9.2 — 2026-07-30
 
 - **The status page can always start OAuth linking**: press START there

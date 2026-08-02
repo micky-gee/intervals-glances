@@ -1,65 +1,72 @@
 import Toybox.Background;
-import Toybox.Communications;
 import Toybox.Lang;
-import Toybox.PersistedContent;
 import Toybox.System;
 import Toybox.Time;
 
-// Periodic background fetch: recent wellness summary, then the 42 day
-// ctl/atl trend, then exit with a compact dictionary for the foreground.
+// Background service. Events never fetch immediately: data has to travel
+// watch -> Garmin Connect -> intervals.icu before the API reflects it, so
+// waking or finishing an activity just schedules the sync a little later.
+// Only one temporal event may exist at a time, so it doubles as the scheduler.
 (:background)
 class IntervalsServiceDelegate extends System.ServiceDelegate {
 
-    hidden var _summary as Dictionary?;
-    hidden var _trend as IntervalsTrendFetcher?;
+    hidden var _job as IntervalsSyncJob?;
 
     function initialize() {
         ServiceDelegate.initialize();
     }
 
+    // The scheduled sync fired.
     function onTemporalEvent() as Void {
-        var opts = IntervalsApi.options();
-        if (opts == null) {
+        if (IntervalsApi.options() == null) {
+            IntervalsSchedule.arm(IntervalsSchedule.IDLE);
             Background.exit({ "err" => "Not connected" });
             return;
         }
-        Communications.makeWebRequest(
-            IntervalsApi.wellnessUrl(IntervalsSettings.athleteId()),
-            IntervalsApi.recentParams(),
-            opts,
-            method(:onRecent));
-    }
-
-    function onRecent(code as Number, data as Dictionary or String or PersistedContent.Iterator or Null) as Void {
-        // JSON array bodies actually arrive as Lang.Array at runtime even
-        // though the documented callback type omits it; erase the static
-        // type so the instanceof branch is not flagged unreachable.
-        var resp = data as Lang.Object?;
-        if (code == 200 && resp instanceof Lang.Array) {
-            _summary = IntervalsApi.summarize(resp);
-            _trend = new IntervalsTrendFetcher(method(:onTrendDone));
-            _trend.start();
+        if (IntervalsCache.authBlocked()) {
+            // Revoked credentials: stop spending requests on 401s.
+            IntervalsSchedule.arm(IntervalsSchedule.IDLE);
+            Background.exit(null);
             return;
         }
-        Background.exit({ "err" => IntervalsApi.errorText(code) });
+        var cache = IntervalsCache.load();
+        if (cache == null || !(cache["hist"] instanceof Lang.Number)) {
+            // Nothing cached yet; the first (wide) fetch belongs to the
+            // foreground, where there is memory for it.
+            IntervalsSchedule.arm(IntervalsSchedule.IDLE);
+            Background.exit(null);
+            return;
+        }
+        var hist = cache["hist"] as Number;
+        var gap = 0;
+        if (cache["dn"] instanceof Lang.Number) {
+            gap = IntervalsApi.todayIdx() - (cache["dn"] as Number);
+            if (gap < 0) { gap = 0; }
+        }
+        var from = gap + IntervalsApi.DELTA_DAYS;
+        if (from > hist - 1) { from = hist - 1; }
+
+        _job = new IntervalsSyncJob(from, 0, hist, method(:onDone));
+        _job.start();
     }
 
-    function onTrendDone(series as Dictionary?) as Void {
-        var out = {
-            "ts" => Time.now().value(),
-            "w" => _summary,
-            "wd" => IntervalsApi.MAX_DAYS
-        };
-        if (series != null) {
-            out["s"] = series;
-        }
-        try {
-            Background.exit(out);
-        } catch (e) {
-            // Series too large for the background exit payload; at least
-            // deliver the summary.
-            out.remove("s");
-            Background.exit(out);
-        }
+    function onDone(ok as Boolean) as Void {
+        IntervalsSchedule.arm(IntervalsSchedule.IDLE);
+        // The job already persisted everything; this just wakes the UI.
+        Background.exit({ "synced" => ok });
+    }
+
+    // Overnight sleep, HRV and resting HR are recorded at wake, but only
+    // reach intervals.icu once the watch has synced through Garmin Connect.
+    function onWakeTime() as Void {
+        IntervalsSchedule.arm(IntervalsSchedule.AFTER_WAKE);
+        Background.exit(null);
+    }
+
+    // Load (CTL/ATL) moves when an activity lands upstream, which likewise
+    // takes a few minutes after the activity ends.
+    function onActivityCompleted(activity as Dictionary) as Void {
+        IntervalsSchedule.arm(IntervalsSchedule.AFTER_ACTIVITY);
+        Background.exit(null);
     }
 }

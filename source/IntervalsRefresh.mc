@@ -1,129 +1,147 @@
-import Toybox.Application.Storage;
-import Toybox.Communications;
 import Toybox.Lang;
-import Toybox.PersistedContent;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
 
-// Foreground refresh, used when the widget is opened with stale data or the
-// user presses START. Same requests as the background service.
+// Foreground sync policy: decides *whether* and *how wide* to sync, then runs
+// an IntervalsSyncJob. The fetching and merging live in the job so the
+// background service shares exactly the same path.
 module IntervalsRefresh {
 
-    var _fetcher as Fetcher? = null;
-    var _lastAttempt as Number = 0;
+    // Manual START: brief guard against double presses only.
+    const MANUAL_BACKOFF = 60;
+    // Opening the widget: wellness data changes daily, so there is nothing to
+    // gain from a tighter cadence than this.
+    const OPEN_STALE = 2 * 3600;
 
     // Transient: whether the START-triggered zoom overlay is showing. Lives
     // here (a foreground-only module) so the view and delegate share it
     // without pulling anything into glance scope.
     var zoomActive as Boolean = false;
 
+    var _driver as Driver? = null;
+
+    function driver() as Driver {
+        if (_driver == null) {
+            _driver = new Driver();
+        }
+        return _driver;
+    }
+
     function isBusy() as Boolean {
-        return _fetcher != null && _fetcher.busy;
+        return driver().busy;
     }
 
+    // START button: the user explicitly asked, so only the double-press guard
+    // and the auth backoff apply.
     function start() as Void {
-        if (isBusy() || !IntervalsSettings.isConnected()) {
-            return;
-        }
-        // Don't hammer the API when something keeps failing.
-        var now = Time.now().value();
-        if (now - _lastAttempt < 60) {
-            return;
-        }
-        _lastAttempt = now;
-        _fetcher = new Fetcher();
-        _fetcher.start();
+        driver().start(false);
     }
 
-    // Immediate refresh that skips the retry backoff - used right after the
-    // OAuth flow completes so new data appears without waiting.
+    // Straight after linking an account: skip the double-press guard.
     function startNow() as Void {
-        _lastAttempt = 0;
-        start();
+        driver().start(true);
     }
 
-    // Refresh if never synced, data is older than 15 minutes, or the chart
-    // configuration changed since the cached series were fetched.
+    // Widget opened: sync only if the cache is cold, incomplete, or stale.
     function startIfStale() as Void {
-        var age = IntervalsData.ageSecs();
-        if (age == null || age > 900 || missingSeries()) {
-            start();
-        }
+        driver().startIfStale();
     }
 
-    function missingSeries() as Boolean {
-        var d = IntervalsData.data();
-        if (d == null) {
-            return true;
-        }
-        if (d["wd"] != IntervalsApi.MAX_DAYS) {
-            return true;
-        }
-        var s = d["s"];
-        if (!(s instanceof Lang.Dictionary)) {
-            return true;
-        }
-        var keys = IntervalsApi.selectedChartKeys();
-        for (var i = 0; i < keys.size(); i++) {
-            if (!s.hasKey(keys[i])) {
-                return true;
-            }
-        }
-        return false;
+    // The user zoomed past the history we hold: fetch just the missing older
+    // days once.
+    function backfillHistory() as Void {
+        driver().backfill();
     }
 
-    class Fetcher {
+    class Driver {
         var busy as Boolean = false;
-        hidden var _summary as Dictionary?;
-        hidden var _trend as IntervalsTrendFetcher?;
+        hidden var _job as IntervalsSyncJob? = null;
+        hidden var _lastAttempt as Number = 0;
 
         function initialize() {
         }
 
-        function start() as Void {
-            var opts = IntervalsApi.options();
-            if (opts == null) {
+        function start(force as Boolean) as Void {
+            var now = Time.now().value();
+            if (busy || (!force && now - _lastAttempt < MANUAL_BACKOFF)) {
                 return;
             }
+            run(plannedFrom(), 0, plannedHist());
+        }
+
+        function startIfStale() as Void {
+            if (busy) {
+                return;
+            }
+            var cold = IntervalsData.histDays() == 0 || missingKeys();
+            var age = IntervalsData.ageSecs();
+            if (!cold && age != null && age < OPEN_STALE) {
+                return;
+            }
+            run(plannedFrom(), 0, plannedHist());
+        }
+
+        function backfill() as Void {
+            var have = IntervalsData.histDays();
+            if (busy || have <= 0 || have >= IntervalsApi.MAX_HIST) {
+                return;
+            }
+            run(IntervalsApi.MAX_HIST - 1, have, IntervalsApi.MAX_HIST);
+        }
+
+        // True when a graph slot points at a metric the cache has no series
+        // for (the user changed a slot since the last sync).
+        hidden function missingKeys() as Boolean {
+            var d = IntervalsData.data();
+            if (d == null || !(d["s"] instanceof Lang.Dictionary)) {
+                return true;
+            }
+            var s = d["s"] as Dictionary;
+            var keys = IntervalsApi.selectedChartKeys();
+            for (var i = 0; i < keys.size(); i++) {
+                if (!s.hasKey(keys[i])) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // How far back this sync must reach: just the mutable tail normally,
+        // the whole cached span when something is missing from it.
+        hidden function plannedFrom() as Number {
+            var have = IntervalsData.histDays();
+            if (have <= 0) {
+                return IntervalsApi.INITIAL_HIST - 1;
+            }
+            if (missingKeys()) {
+                return have - 1;
+            }
+            var from = IntervalsData.daysSinceNewest() + IntervalsApi.DELTA_DAYS;
+            return from > have - 1 ? have - 1 : from;
+        }
+
+        hidden function plannedHist() as Number {
+            var have = IntervalsData.histDays();
+            return have > 0 ? have : IntervalsApi.INITIAL_HIST;
+        }
+
+        hidden function run(fromDaysBack as Number, toDaysBack as Number,
+                hist as Number) as Void {
+            if (IntervalsApi.options() == null || IntervalsCache.authBlocked()) {
+                return;
+            }
+            _lastAttempt = Time.now().value();
             busy = true;
-            Communications.makeWebRequest(
-                IntervalsApi.wellnessUrl(IntervalsSettings.athleteId()),
-                IntervalsApi.recentParams(),
-                opts,
-                method(:onRecent));
+            _job = new IntervalsSyncJob(fromDaysBack, toDaysBack, hist,
+                method(:onDone));
+            _job.start();
+            WatchUi.requestUpdate();
         }
 
-        function onRecent(code as Number, data as Dictionary or String or PersistedContent.Iterator or Null) as Void {
-            var resp = data as Lang.Object?;
-            if (code == 200 && resp instanceof Lang.Array) {
-                _summary = IntervalsApi.summarize(resp);
-                _trend = new IntervalsTrendFetcher(method(:onTrendDone));
-                _trend.start();
-            } else {
-                busy = false;
-                System.println("sync failed: " + code);
-                Storage.setValue("err", IntervalsApi.errorText(code));
-                WatchUi.requestUpdate();
-            }
-        }
-
-        function onTrendDone(series as Dictionary?) as Void {
-            var out = {
-                "ts" => Time.now().value(),
-                "w" => _summary,
-                "wd" => IntervalsApi.MAX_DAYS
-            };
-            if (series != null) {
-                out["s"] = series;
-            }
-            Storage.setValue("data", out);
-            Storage.deleteValue("err");
+        function onDone(ok as Boolean) as Void {
             busy = false;
-            var w = _summary;
-            System.println("sync ok: ctl=" + (w != null ? w["ctl"] : null)
-                + " atl=" + (w != null ? w["atl"] : null)
-                + " series=" + (series != null));
+            _job = null;
             WatchUi.requestUpdate();
         }
     }

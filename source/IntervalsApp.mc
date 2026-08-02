@@ -42,21 +42,26 @@ class IntervalsApp extends Application.AppBase {
         WatchUi.requestUpdate();
     }
 
-    // Data handed back by the background service via Background.exit().
+    // The background service persists its own results (IntervalsSyncJob), so
+    // this only needs to surface errors and repaint.
     function onBackgroundData(data) {
-        if (data instanceof Lang.Dictionary) {
-            if (data["w"] != null) {
-                Storage.setValue("data", data);
-                Storage.deleteValue("err");
-            } else if (data["err"] != null) {
-                Storage.setValue("err", data["err"]);
-            }
+        if (data instanceof Lang.Dictionary && data["err"] != null) {
+            Storage.setValue("err", data["err"]);
         }
         WatchUi.requestUpdate();
     }
 
     hidden function scheduleBackground() as Void {
-        // Hourly temporal event; the system enforces a 5 minute floor.
-        Background.registerForTemporalEvent(new Time.Duration(3600));
+        // Sync when the data actually changes rather than on a fixed clock:
+        // at wake (overnight wellness) and after activities (load), each of
+        // which schedules a delayed sync. The temporal event is the scheduler
+        // itself, re-armed after every fire.
+        if (Background has :registerForWakeEvent) {
+            Background.registerForWakeEvent();
+        }
+        if (Background has :registerForActivityCompletedEvent) {
+            Background.registerForActivityCompletedEvent();
+        }
+        IntervalsSchedule.ensureArmed();
     }
 }

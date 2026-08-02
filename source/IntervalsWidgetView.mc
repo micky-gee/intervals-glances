@@ -175,8 +175,15 @@ class IntervalsWidgetView extends WatchUi.View {
         return title;
     }
 
+    // Label what is actually plotted: the zoom can reach past the history
+    // cached so far, which is then being backfilled.
     hidden function windowLabel() as String {
-        return IntervalsData.zoomDays().toString() + "d";
+        var days = IntervalsData.zoomDays();
+        var have = IntervalsData.histDays();
+        if (have > 0 && have < days) {
+            days = have;
+        }
+        return days.toString() + "d";
     }
 
     // ---- page 0: form / fitness / fatigue -------------------------------
@@ -521,7 +528,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["STATUS", err != null ? err : "OK", "",
                 IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.9.2", "", IntervalsUi.SLATE]
+            ["VERSION", "0.10.0", "", IntervalsUi.SLATE]
         ];
     }
 

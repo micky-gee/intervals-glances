@@ -37,6 +37,28 @@ module IntervalsData {
         return null;
     }
 
+    // Days of history the cache currently holds (0 when cold). Starts at
+    // IntervalsApi.INITIAL_HIST and grows to MAX_HIST only if the user zooms
+    // past it.
+    function histDays() as Number {
+        var d = data();
+        if (d != null && d["hist"] instanceof Lang.Number) {
+            return d["hist"];
+        }
+        return 0;
+    }
+
+    // Whole days between the newest cached day and today - i.e. how much the
+    // next sync has to catch up on.
+    function daysSinceNewest() as Number {
+        var d = data();
+        if (d == null || !(d["dn"] instanceof Lang.Number)) {
+            return 0;
+        }
+        var gap = IntervalsApi.todayIdx() - (d["dn"] as Number);
+        return gap > 0 ? gap : 0;
+    }
+
     // ---- interactive zoom (display window, 7..90 days) -------------------
     // The data is always fetched at MAX_ZOOM; the zoom level just chooses how
     // many of the most recent days the chart pages display, so changing it is
@@ -64,6 +86,13 @@ module IntervalsData {
             }
         }
         return false;
+    }
+
+    // True when the zoom window reaches past the history actually cached, so
+    // the older days need fetching once.
+    function needsBackfill() as Boolean {
+        var have = histDays();
+        return have > 0 && zoomDays() > have;
     }
 
     // Step to the next stop with fewer days (zoom in); returns true if moved.
