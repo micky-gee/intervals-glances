@@ -43,9 +43,11 @@ module IntervalsSettings {
         return "0"; // 0 = the athlete that owns the API key
     }
 
+    // User setting: show form (and colour its zones) as a percentage of
+    // fitness instead of absolute TSB points. intervals.icu offers the same
+    // choice per account, so this mirrors whatever the athlete uses there.
     function formAsPercent() as Boolean {
-        var v = Application.Properties.getValue("formAsPercent");
-        return v == true;
+        return Application.Properties.getValue("formAsPercent") == true;
     }
 
     const GRAPH_PAGES = 4;
