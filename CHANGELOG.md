@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.11.6 — 2026-09-08
+
+**Fitness, fatigue and form on your watch face.** The app publishes a single
+complication named "Intervals data" whose value is all three numbers in one
+string — `31/15/+16`, or `31/15/+52%` when "Form as %" is on. Add it to any
+watch face that supports Connect IQ complications, or to Face It.
+
+- Whole numbers, matching the app's own pages, so a complication never
+  disagrees with the app or the intervals.icu website.
+- Refreshed by the background sync as well as on app launch, so the face stays
+  current between opens. **No extra API requests** — it only reads the cache
+  the sync already keeps.
+- One complication rather than one per metric: a watch's picker only offers the
+  first complication an app declares, so a single string carrying all three is
+  worth more than three values that cannot be chosen.
+
+**Fenix 9 support** — all seven variants (43mm, 47mm/51mm, Pro 43/47/51mm, Pro
+Solar 47/51mm), taking the app to 66 device IDs. All round and glance-capable;
+the Pro Solar models are MIP at 260×260 and 280×280, the same geometry as the
+already-supported Fenix 7 and 7X.
+
+Versions 0.11.0-0.11.5 were withdrawn beta experiments that published three
+separate complications; only the first was ever selectable on the watch. They
+never reached production.
+
 ## v0.10.0 — 2026-08-02
 
 Roughly a **10x cut in intervals.icu API usage** (~58 → ~5 requests per user per

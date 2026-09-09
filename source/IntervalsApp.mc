@@ -33,12 +33,15 @@ class IntervalsApp extends Application.AppBase {
         // Registering here also delivers any OAuth result Garmin cached while
         // the widget was closed during phone-side login.
         IntervalsAuth.init();
+        IntervalsComplications.publish();
         return [new IntervalsWidgetView(0), new IntervalsPageDelegate(0)];
     }
 
     // Repaint when settings arrive from the phone, so glance mode and page
     // toggles apply without relaunching.
     function onSettingsChanged() as Void {
+        // The form scale setting changes what we publish, not just what we draw.
+        IntervalsComplications.publish();
         WatchUi.requestUpdate();
     }
 

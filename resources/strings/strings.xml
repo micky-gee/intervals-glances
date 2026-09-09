@@ -17,4 +17,6 @@
     <string id="SetData2">Data page 2</string>
     <string id="SetData3">Data page 3</string>
     <string id="SetData4">Data page 4</string>
+    <string id="CompName">Intervals data</string>
+    <string id="CompShort">ICU</string>
 </strings>

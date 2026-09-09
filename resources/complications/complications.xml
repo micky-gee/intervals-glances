@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A single complication carrying fitness/fatigue/form as one string.
+         Only one complication per app is offered by the watch's picker, so
+         one that holds all three values is worth more than three that
+         cannot be chosen. Keep id 0 stable: a watch face stores the id it
+         subscribed to. -->
+    <complications>
+        <complication id="0" access="public"
+                      longLabel="@Strings.CompName"
+                      shortLabel="@Strings.CompShort"
+                      icon="@Drawables.CompIcon"
+                      glancePreview="true">
+            <faceIt defaultText="@Strings.CompName"/>
+        </complication>
+    </complications>
+</resources>

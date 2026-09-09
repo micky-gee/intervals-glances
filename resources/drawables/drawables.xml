@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
+    <bitmap id="CompIcon" filename="comp_icon.svg"/>
 </drawables>

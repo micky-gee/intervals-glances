@@ -3,7 +3,7 @@
 A Connect IQ **widget with a glance** that brings your
 [intervals.icu](https://intervals.icu) fitness data to round-screen Garmin
 watches. Built for and tuned on the Fenix 8 Pro MicroLED (`fenix8pro47mm`,
-454×454, API 6.0); supports 59 device IDs across the Fenix 7/8, Epix 2,
+454×454, API 6.0); supports 66 device IDs across the Fenix 7/8/9/E, Epix 2,
 Forerunner, Venu, MARQ 2, Descent, Approach and Instinct 3 AMOLED families
 (layouts scale with screen size; MIP models render the chart palette with
 fewer colors).
@@ -50,9 +50,17 @@ More: [eFTP](docs/screenshots/05-eftp-ring.png) ·
   fonts auto-fitted to their space (no clipped or colliding text on the
   round display).
 - **Status page** — last sync, athlete, auth method, errors.
-- **Sync** — a background service polls hourly; opening the widget refreshes
-  data older than 15 minutes; START forces a sync. The trend window is
-  fetched in 30-day chunks to stay inside the watch's HTTP response limit.
+- **Watch-face complication** — a single complication, "Intervals data",
+  carrying fitness/fatigue/form as one string (`31/15/+16`), for any watch
+  face that supports Connect IQ complications, or Face It. Refreshed by the
+  background sync; follows the "Form as %" setting. This is a watch-face
+  complication, not an activity data field.
+- **Sync** — event-driven rather than clock-driven: a background service
+  syncs ~45 min after you wake and ~20 min after an activity finishes (giving
+  the data time to reach intervals.icu via Garmin Connect), with a ~6 h safety
+  net, every delay jittered per watch. Opening the widget refreshes data older
+  than 2 hours; START forces a sync. A normal sync is a single request for
+  yesterday and today — around five requests per day.
 
 ## Requirements
 
@@ -131,15 +139,20 @@ consent page through Garmin Connect Mobile, and a small Cloudflare Worker
 (`worker/`) exchanges the one-time code for a long-lived bearer token — the
 client secret never ships in the app. Legacy API keys still work via HTTP
 Basic (username `API_KEY`) until v1.0; existing key users see a gentle
-relink nudge every 14 days. Two request flavors hit
-`GET /api/v1/athlete/{id}/wellness` with a `fields=` filter (which also
-strips nulls, keeping payloads small for the watch):
+relink nudge every 14 days.
 
-1. the last 7 days of every displayed wellness metric, collapsed to the most
-   recent non-null value per field;
-2. the chart window of `ctl,atl` plus the selected chart metrics, fetched in
-   ≤30-day chunks (a 90-day response with `sportInfo` exceeds the watch's
-   response buffer).
+Every request has the same shape: `GET /api/v1/athlete/{id}/wellness` over a
+date window, with a `fields=` filter (which also strips nulls, keeping payloads
+small for the watch) covering the union of the tile metrics and the selected
+chart metrics.
+
+Because past wellness days are immutable, a normal sync asks only for
+yesterday and today — one request — and merges the result into a local cache;
+the tile values are the most recent non-null reading within the last 7 cached
+days. The window widens automatically after time offline, and wide fetches are
+split into ≤30-day chunks (a 90-day response with `sportInfo` exceeds the
+watch's response buffer). A fresh cache loads 30 days of history; the older 60
+are fetched once, only if you zoom past 30 days.
 
 Form (TSB) is computed as `ctl − atl`. The zone coloring and chart bands use
 absolute TSB thresholds (+20 / +5 / −10 / −30) by default, matching
@@ -148,8 +161,8 @@ the displayed value and the zone scale to percent-of-CTL, matching the
 equivalent intervals.icu option. eFTP comes from the wellness `sportInfo`
 array (first sport entry).
 
-Please be polite to the API — the widget syncs hourly in the background and
-on-demand, which is well within what the intervals.icu folks ask of clients.
+Please be polite to the API — the widget averages about five requests per day
+per user, which is well within what the intervals.icu folks ask of clients.
 
 ## License
 

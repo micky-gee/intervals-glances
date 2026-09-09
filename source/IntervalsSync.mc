@@ -87,6 +87,7 @@ class IntervalsSyncJob {
             var merged = IntervalsCache.merge(IntervalsCache.load(), _recs, _hist);
             IntervalsCache.save(merged);
             IntervalsCache.clearAuthFailure();
+            IntervalsComplications.publish();
             System.println("sync: ok, " + _recs.size() + " records, hist " + _hist);
             finish(true, null);
         } catch (e) {
