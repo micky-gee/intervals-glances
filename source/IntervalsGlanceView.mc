@@ -13,11 +13,19 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
     const CTL_COLOR = 0x4DA6FF;
     const ATL_COLOR = 0xCC66FF;
 
+    // The zone bands are a soft backdrop, so trade a little horizontal
+    // resolution for draw time. A fixed column budget also bounds the work
+    // regardless of screen width, instead of scaling with it.
+    const BAND_COLS = 60;
+
+
     function initialize() {
         GlanceView.initialize();
     }
 
+
     function onUpdate(dc as Dc) as Void {
+        IntervalsData.beginFrame();
         var w = dc.getWidth();
         var h = dc.getHeight();
 
@@ -98,13 +106,20 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
+
+    // Antialiasing is worth it for the diagonal series lines and pure cost for
+    // the vertical band fill, which is why it is toggled rather than left on.
+    hidden function antiAlias(dc as Dc, on as Boolean) as Void {
+        if (dc has :setAntiAlias) {
+            dc.setAntiAlias(on);
+        }
+    }
+
     // Banded CTL/ATL chart. mode 0 draws both lines, 1 only CTL, 2 only ATL.
     hidden function drawMiniLoad(dc as Dc, ctl as Array, atl as Array,
             mode as Number, x0 as Number, x1 as Number, y0 as Number,
             y1 as Number) as Void {
-        if (dc has :setAntiAlias) {
-            dc.setAntiAlias(true);
-        }
+        antiAlias(dc, false);
         var n = ctl.size();
         if (n < 2) {
             return;
@@ -138,8 +153,12 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
         var scale = (y1 - y0).toFloat() / (hi - lo);
 
         // Zone bands, in coarse 3px columns to keep the glance light.
-        dc.setPenWidth(3);
-        for (var x = x0; x <= x1; x += 3) {
+        var step = (x1 - x0) / BAND_COLS;
+        if (step < 1) {
+            step = 1;
+        }
+        dc.setPenWidth(step);
+        for (var x = x0; x <= x1; x += step) {
             var t = (x - x0).toFloat() / (x1 - x0) * (n - 1);
             var i = t.toNumber();
             var i2 = i + 1 < n ? i + 1 : i;
@@ -171,9 +190,7 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
     // high-risk at the bottom up to transition at the top.
     hidden function drawMiniForm(dc as Dc, ctl as Array, atl as Array,
             x0 as Number, x1 as Number, y0 as Number, y1 as Number) as Void {
-        if (dc has :setAntiAlias) {
-            dc.setAntiAlias(true);
-        }
+        antiAlias(dc, false);
         var n = ctl.size();
         if (n < 2) {
             return;
@@ -208,8 +225,12 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
         var edges = pct ? [-0.30, -0.10, 0.05, 0.20] as Array<Float>
             : [-30.0, -10.0, 5.0, 20.0] as Array<Float>;
         var fills = [FILLS[4], FILLS[3], FILLS[2], FILLS[1], FILLS[0]] as Array<Number>;
-        dc.setPenWidth(3);
-        for (var x = x0; x <= x1; x += 3) {
+        var step = (x1 - x0) / BAND_COLS;
+        if (step < 1) {
+            step = 1;
+        }
+        dc.setPenWidth(step);
+        for (var x = x0; x <= x1; x += step) {
             var t = (x - x0).toFloat() / (x1 - x0) * (n - 1);
             var i = t.toNumber();
             var i2 = i + 1 < n ? i + 1 : i;
@@ -235,6 +256,7 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
     hidden function drawMiniLine(dc as Dc, series as Array, lo as Float,
             scale as Float, x0 as Number, x1 as Number, y0 as Number,
             y1 as Number, color as Number, pen as Number) as Void {
+        antiAlias(dc, true);
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(pen);
         var n = series.size();

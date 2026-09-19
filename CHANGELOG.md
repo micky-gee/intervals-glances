@@ -1,29 +1,66 @@
 # Changelog
 
-## v0.11.6 — 2026-09-08
+## v0.11.12 — 2026-09-19
 
-**Fitness, fatigue and form on your watch face.** The app publishes a single
-complication named "Intervals data" whose value is all three numbers in one
-string — `31/15/+16`, or `31/15/+52%` when "Form as %" is on. Add it to any
-watch face that supports Connect IQ complications, or to Face It.
+**Fitness, fatigue and form on your watch face.** The app publishes a
+complication named "Intervals data" carrying all three numbers in one string -
+`31/15/+16`, or `31/15/+52%` when "Form as %" is on. Add it to any watch face
+that supports Connect IQ complications, or to Face It. It follows the app's own
+rounding and form scale, so it can never disagree with the pages inside the
+app, and the background sync refreshes it, so a face stays current between
+opens. It costs **no extra API requests** - it only reads the cache the sync
+already keeps.
 
-- Whole numbers, matching the app's own pages, so a complication never
-  disagrees with the app or the intervals.icu website.
-- Refreshed by the background sync as well as on app launch, so the face stays
-  current between opens. **No extra API requests** — it only reads the cache
-  the sync already keeps.
-- One complication rather than one per metric: a watch's picker only offers the
-  first complication an app declares, so a single string carrying all three is
-  worth more than three values that cannot be chosen.
+One complication rather than one per metric: a watch's picker only ever offers
+the first complication an app declares, so a single string carrying all three
+is worth more than three values that cannot be chosen.
 
-**Fenix 9 support** — all seven variants (43mm, 47mm/51mm, Pro 43/47/51mm, Pro
-Solar 47/51mm), taking the app to 66 device IDs. All round and glance-capable;
-the Pro Solar models are MIP at 260×260 and 280×280, the same geometry as the
-already-supported Fenix 7 and 7X.
+**Fenix 9 support** - all seven variants (43mm, 47mm/51mm, Pro 43/47/51mm, Pro
+Solar 47/51mm), taking the app to 66 devices. The Pro Solar models are MIP at
+260x260 and 280x280, the same geometry as the already-supported fenix 7 and 7X.
 
-Versions 0.11.0-0.11.5 were withdrawn beta experiments that published three
-separate complications; only the first was ever selectable on the watch. They
-never reached production.
+**Fixed a crash on watches without a graphics accelerator.** Opening the app on
+a Forerunner 255 tripped the Connect IQ watchdog (`Code Executed Too Long`)
+while drawing the polar load chart - the default first page - so the app
+crashed on open. This affects the 18 MIP devices among the 66 supported: fenix
+7/7S/7X and Pro variants, fenix 8 Solar, fenix 9 Pro Solar, Forerunner
+255/255s/955 and Enduro 3, none of which have the GPU the AMOLED models use.
+The chart code was unchanged since v0.8.3, so the crash had been present in
+production since then.
+
+The cause was two kinds of work that produced nothing on screen. The spline
+renderer solved a Catmull-Rom cubic per segment even when the step count worked
+out to one per span - and such a span evaluated at its endpoint is exactly the
+next control point, so 178 cubics per frame were being solved to draw a plain
+polyline. And the zone-band underlays were antialiased, which does nothing for a
+solid fill built from overlapping strokes. Antialiasing is now kept for the data
+curves only, the underlays follow a step budget instead of a fixed 241 spokes
+(or one strip per pixel column on the rectangular chart), and the ring chart's
+baseline band is one arc as thick as the band rather than one arc per radius
+pixel. The chart now draws on a Forerunner 255 in 7-12 ms.
+
+**A faster glance.** The glance stalled as it scrolled into view and again as it
+took focus. Three causes: the form-zone bands behind its chart were antialiased,
+which costs time on a vertical line and changes nothing; every data accessor
+re-read and deserialised the whole cache from Storage, six times per draw, where
+once per draw will do; and taking focus re-registered the wake and
+activity-completed background events every time, though those persist on the
+device until unregistered. Measured on the watch itself, since the simulator -
+where Storage is memory and drawing is native - reproduced none of it.
+
+**Text pages re-spaced, with bigger numbers.** Values on the tile pages are now
+the largest the row can hold, 76px against 68px before on a 454px watch, and the
+tiles run from just under the header to just above the page dots instead of
+stopping short at both ends. Tile width follows the screen's actual shape: a row
+near the top or bottom of a round display sits on a shorter chord than one
+across the middle, so a single fixed width both wasted the middle and overhung
+the ends. The middle row is now half again as wide as before. Long labels shrink
+to fit instead of running past their tile, the status page pairs its rows so the
+longest values land on the widest row, and on the form page the hero number and
+the zone label below it no longer overlap.
+
+Versions 0.11.0-0.11.11 were beta-only iterations of the above and never
+reached production.
 
 ## v0.10.0 — 2026-08-02
 

@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
 
 // Modern text rendering for the full-screen pages: scalable vector fonts
@@ -99,16 +100,35 @@ module IntervalsUi {
     // Sizes are fractions of screen width so the same layout holds from
     // 218px MIP faces up to the 454px MicroLED (fractions calibrated to
     // reproduce the tuned 454px look exactly).
+    // Tile contents are sized from the height of the row they sit in, not from
+    // the screen alone: a two-row page then uses the space it has, and a
+    // three-row page keeps a clear gap between rows instead of the four pixels
+    // a fixed size left it with. Both are clamped so the extremes stay sane.
     function drawTile(dc as Dc, cx as Number, cy as Number, maxW as Number,
-            item as Array) as Void {
+            rowH as Number, item as Array) as Void {
         var w = dc.getWidth();
+        // The lower bounds are absolute, not a fraction of the screen: on the
+        // smallest watches a proportional floor put the label under 10px.
+        var vs = clampSize(rowH * 68 / 100, w * 10 / 100, w * 22 / 100);
+        var ls = clampSize(rowH * 18 / 100, w * 42 / 1000, w * 55 / 1000);
+        if (vs < 24) { vs = 24; }
+        if (ls < 11) { ls = 11; }
+
         var valueColor = item.size() > 4
             ? item[4] as Number : Graphics.COLOR_WHITE;
-        drawValueUnit(dc, cx, cy - w * 35 / 1000, item[1] as String,
-            item[2] as String, maxW, w * 15 / 100, valueColor);
-        dc.setColor(item[3] as Number, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, cy + w * 73 / 1000, font(w * 48 / 1000), item[0] as String,
+        drawValueUnit(dc, cx, cy - rowH * 12 / 100, item[1] as String,
+            item[2] as String, maxW, vs, valueColor);
+        // Fitted rather than drawn flat, so a long label such as STRESS IDX
+        // shrinks instead of running past the tile.
+        drawFit(dc, cx, cy + rowH * 37 / 100, item[0] as String, maxW, ls,
+            item[3] as Number,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    function clampSize(v as Number, lo as Number, hi as Number) as Number {
+        if (v < lo) { return lo; }
+        if (v > hi) { return hi; }
+        return v;
     }
 
     // Two-column grid of stat tiles, sized for the round 454px screen.
@@ -121,17 +141,45 @@ module IntervalsUi {
             return;
         }
         var rows = (n + 1) / 2;
-        var top = h * 20 / 100;
-        var span = h * 65 / 100;
+        // Runs from just under the header to just above the page dots.
+        var top = h * 16 / 100;
+        var span = h * 74 / 100;
         var rowH = span / rows;
         for (var i = 0; i < n; i++) {
             var r = i / 2;
             var lastOdd = (n % 2 == 1) && (i == n - 1);
-            var cx = lastOdd ? w / 2
-                : (i % 2 == 0 ? w * 29 / 100 : w * 71 / 100);
             var cy = top + rowH * r + rowH / 2;
-            drawTile(dc, cx, cy, lastOdd ? w * 50 / 100 : w * 35 / 100,
-                items[i] as Array);
+            // How much width this row actually has. A row near the top or
+            // bottom of a round screen sits on a shorter chord than one across
+            // the middle, so a single fixed tile width either wastes the middle
+            // or overhangs the ends. Measured at whichever edge of the row is
+            // furthest from the centre, which is where the chord is shortest.
+            var half = rowHalfWidth(w, h, cy, rowH);
+            var usable = half * 2 - w * 8 / 100;
+            var maxW = lastOdd ? usable : (usable - w * 4 / 100) / 2;
+            var cx = w / 2;
+            if (!lastOdd) {
+                var off = (maxW + w * 4 / 100) / 2;
+                cx = i % 2 == 0 ? w / 2 - off : w / 2 + off;
+            }
+            drawTile(dc, cx, cy, maxW, rowH, items[i] as Array);
         }
+    }
+
+    // Half the chord the screen offers at the widest-reaching edge of a row.
+    // Square screens keep the full width.
+    function rowHalfWidth(w as Number, h as Number, cy as Number,
+            rowH as Number) as Number {
+        if (w != h) {
+            return w / 2;
+        }
+        var r = w / 2;
+        var top = cy - rowH / 2;
+        var bot = cy + rowH / 2;
+        var dy = (r - top).abs() > (bot - r).abs() ? (r - top).abs() : (bot - r).abs();
+        if (dy >= r) {
+            return 0;
+        }
+        return Math.sqrt(r * r - dy * dy).toNumber();
     }
 }

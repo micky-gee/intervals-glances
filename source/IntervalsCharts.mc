@@ -95,9 +95,7 @@ module IntervalsCharts {
     // changes through time.
     function drawLoadChart(dc as Dc, ctl as Array, atl as Array,
             x0 as Number, x1 as Number, y0 as Number, y1 as Number) as Void {
-        if (dc has :setAntiAlias) {
-            dc.setAntiAlias(true);
-        }
+        antiAlias(dc, false);
         var n = ctl.size();
         var pct = IntervalsSettings.formAsPercent();
         var range = loadRange(ctl, atl);
@@ -105,9 +103,13 @@ module IntervalsCharts {
         var hi = range[1] as Float;
         var scale = (y1 - y0).toFloat() / (hi - lo);
 
-        // Band underlay, one vertical strip per pixel column.
-        dc.setPenWidth(1);
-        for (var x = x0; x <= x1; x++) {
+        // Band underlay. Drawn on a column budget rather than per pixel, with
+        // the pen widened to match, so a wider screen costs no more.
+        var cols = fillSteps(x1 - x0, 3);
+        var xStep = (x1 - x0) / cols;
+        if (xStep < 1) { xStep = 1; }
+        dc.setPenWidth(xStep + 1);
+        for (var x = x0; x <= x1; x += xStep) {
             var t = (x - x0).toFloat() / (x1 - x0) * (n - 1);
             var i = t.toNumber();
             var i2 = i + 1 < n ? i + 1 : i;
@@ -140,6 +142,7 @@ module IntervalsCharts {
             gv += step;
         }
 
+        antiAlias(dc, true);
         drawPolyline(dc, atl, lo, hi, x0, x1, y0, y1, ATL_COLOR, 4);
         drawPolyline(dc, ctl, lo, hi, x0, x1, y0, y1, CTL_COLOR, 4);
     }
@@ -149,9 +152,7 @@ module IntervalsCharts {
     function drawSeriesChart(dc as Dc, values as Array, color as Number,
             x0 as Number, x1 as Number, y0 as Number, y1 as Number,
             baseline as Boolean) as Boolean {
-        if (dc has :setAntiAlias) {
-            dc.setAntiAlias(true);
-        }
+        antiAlias(dc, true);
         var n = values.size();
         var minV = null;
         var maxV = null;
@@ -288,9 +289,7 @@ module IntervalsCharts {
 
     function drawPolarLoadChart(dc as Dc, ctl as Array, atl as Array,
             cx as Number, cy as Number, rIn as Number, rOut as Number) as Void {
-        if (dc has :setAntiAlias) {
-            dc.setAntiAlias(true);
-        }
+        antiAlias(dc, false);
         var n = ctl.size();
         var pct = IntervalsSettings.formAsPercent();
         var range = loadRange(ctl, atl);
@@ -299,8 +298,12 @@ module IntervalsCharts {
         var scale = (rOut - rIn) / (hi - lo);
 
         // Band underlay: one spoke per angle step, wide enough to overlap.
-        var steps = 240;
-        dc.setPenWidth(5);
+        // The step count follows the outer arc length up to a fixed budget,
+        // and the pen is widened to match the resulting spacing so the fill
+        // stays solid however few spokes are drawn.
+        var arcLen = (2.0 * Math.PI * rOut * (RING_SWEEP_DEG / 360.0)).toNumber();
+        var steps = fillSteps(arcLen, 5);
+        dc.setPenWidth(arcLen / steps + 2);
         for (var s = 0; s <= steps; s++) {
             var t = s.toFloat() / steps * (n - 1);
             var i = t.toNumber();
@@ -355,6 +358,7 @@ module IntervalsCharts {
             gv += step;
         }
 
+        antiAlias(dc, true);
         drawPolarSeries(dc, atl, lo, hi, cx, cy, rIn, rOut, ATL_COLOR, 4);
         drawPolarSeries(dc, ctl, lo, hi, cx, cy, rIn, rOut, CTL_COLOR, 4);
     }
@@ -381,6 +385,33 @@ module IntervalsCharts {
     // bar per day from lower-left (oldest), over 12 o'clock, to lower-right
     // (newest), leaving a 60 degree gap at the bottom. Bar length encodes
     // the value within the window's min..max; the newest bar is white.
+    // A band underlay is a solid fill built from many overlapping strokes, so
+    // antialiasing each stroke costs time and changes nothing once they
+    // overlap. It is worth it only for the data curves drawn on top. On MIP
+    // devices the difference decides whether the draw finishes inside the
+    // system's execution budget at all.
+    function antiAlias(dc as Dc, on as Boolean) as Void {
+        if (dc has :setAntiAlias) {
+            dc.setAntiAlias(on);
+        }
+    }
+
+    // Strokes for a fill: one per PITCH pixels of the span, capped so the cost
+    // is bounded on a large screen instead of growing with it. Keeping the
+    // pitch small keeps the pen narrow, so the fill still stops cleanly at the
+    // chart edge instead of spilling past it.
+    function fillSteps(span as Number, pitch as Number) as Number {
+        var n = span / pitch;
+        if (n > BAND_MAX) { n = BAND_MAX; }
+        if (n < 8) { n = 8; }
+        return n;
+    }
+
+    // Removing antialiasing is what makes these fills affordable; the step cap
+    // is a second, smaller saving that also bounds the worst case on the
+    // widest screens.
+    const BAND_MAX = 160;
+
     const RING_START_DEG = 240.0;
     const RING_SWEEP_DEG = 300.0;
 
@@ -426,13 +457,17 @@ module IntervalsCharts {
             useBase = (st[2] as Number) >= 5 && sd > 0;
         }
         if (useBase) {
-            dc.setPenWidth(1);
+            // One arc as thick as the band, rather than one arc per radius
+            // pixel: identical on screen, a fraction of the work.
             dc.setColor(0x1F4030, Graphics.COLOR_TRANSPARENT);
             var bLo = bandR(mean - 0.75 * sd, minV, maxV, r1, span);
             var bHi = bandR(mean + 0.75 * sd, minV, maxV, r1, span);
-            for (var r = bLo; r <= bHi; r++) {
-                dc.drawArc(cx, cy, r, Graphics.ARC_COUNTER_CLOCKWISE, -60, 240);
+            if (bHi > bLo) {
+                dc.setPenWidth(bHi - bLo);
+                dc.drawArc(cx, cy, (bLo + bHi) / 2,
+                    Graphics.ARC_COUNTER_CLOCKWISE, -60, 240);
             }
+            dc.setPenWidth(1);
         }
 
         // Concentric grid arcs across the sweep.
@@ -511,6 +546,21 @@ module IntervalsCharts {
         var steps = (110 / (n - 1)).toNumber();
         if (steps < 1) { steps = 1; }
         if (steps > 22) { steps = 22; }
+        if (steps == 1) {
+            // A Catmull-Rom span evaluated at t=1 is exactly the next control
+            // point, so with a single step the spline is a polyline. Drawing it
+            // as one skips a cubic per segment and changes nothing on screen.
+            var lx = pts[0][0];
+            var ly = pts[0][1];
+            for (var i = 1; i < n; i++) {
+                var q = pts[i] as Array<Number>;
+                dc.drawLine(lx, ly, q[0], q[1]);
+                lx = q[0];
+                ly = q[1];
+            }
+            dc.setPenWidth(1);
+            return;
+        }
         var px = pts[0][0];
         var py = pts[0][1];
         for (var i = 0; i < n - 1; i++) {

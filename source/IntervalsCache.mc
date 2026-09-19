@@ -85,7 +85,7 @@ module IntervalsCache {
     // history, or a full rebuild from an empty cache - by re-deriving each
     // series array against the target day range.
     function merge(cache as Dictionary?, records as Array, histDays as Number) as Dictionary {
-        var today = IntervalsApi.todayIdx();
+        var today = IntervalsDays.todayIdx();
 
         // Index the incoming batch by day.
         var byDay = {};
@@ -95,7 +95,7 @@ module IntervalsCache {
             if (!(r instanceof Lang.Dictionary)) {
                 continue;
             }
-            var idx = IntervalsApi.dayIdxOfDate(r["id"]);
+            var idx = IntervalsDays.dayIdxOfDate(r["id"]);
             if (idx != null) {
                 byDay[idx] = r;
                 if (newest == null || idx > newest) { newest = idx; }

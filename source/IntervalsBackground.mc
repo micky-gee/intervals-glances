@@ -40,7 +40,7 @@ class IntervalsServiceDelegate extends System.ServiceDelegate {
         var hist = cache["hist"] as Number;
         var gap = 0;
         if (cache["dn"] instanceof Lang.Number) {
-            gap = IntervalsApi.todayIdx() - (cache["dn"] as Number);
+            gap = IntervalsDays.todayIdx() - (cache["dn"] as Number);
             if (gap < 0) { gap = 0; }
         }
         var from = gap + IntervalsApi.DELTA_DAYS;

@@ -68,31 +68,8 @@ module IntervalsApi {
         return g.year.format("%04d") + "-" + g.month.format("%02d") + "-" + g.day.format("%02d");
     }
 
-    // ---- day indices ------------------------------------------------------
-    // Cache merging aligns everything by day number. Only differences between
-    // indices are used, and the +43200 rounds to the nearest day so a DST
-    // shift can't move a date across a boundary.
-    function dayIdxOf(moment as Time.Moment) as Number {
-        return (moment.value() + 43200) / 86400;
-    }
 
-    function todayIdx() as Number {
-        return dayIdxOf(Time.today());
-    }
 
-    // Day index of an API date string ("YYYY-MM-DD"), or null if malformed.
-    function dayIdxOfDate(s) as Number? {
-        if (!(s instanceof Lang.String) || s.length() < 10) {
-            return null;
-        }
-        var y = s.substring(0, 4).toNumber();
-        var m = s.substring(5, 7).toNumber();
-        var d = s.substring(8, 10).toNumber();
-        if (y == null || m == null || d == null) {
-            return null;
-        }
-        return dayIdxOf(Gregorian.moment({ :year => y, :month => m, :day => d }));
-    }
 
     function momentDaysBack(days as Number) as Time.Moment {
         return Time.today().add(new Time.Duration(-days * 86400));

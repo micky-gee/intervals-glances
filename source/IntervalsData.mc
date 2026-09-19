@@ -8,12 +8,27 @@ import Toybox.Time;
 (:glance)
 module IntervalsData {
 
+    // The cache is a multi-kilobyte nested structure in Storage, and a draw
+    // touches it through six or more accessors. Reading it once per frame
+    // instead of once per call is invisible in the simulator, where Storage is
+    // memory, and worth hundreds of milliseconds on a watch, where it is flash.
+    var _memo = null;
+    var _memoSet as Boolean = false;
+
+    // Called at the top of every draw: the next data() re-reads, so a sync
+    // landing between frames is picked up with no staleness.
+    function beginFrame() as Void {
+        _memo = null;
+        _memoSet = false;
+    }
+
     function data() as Dictionary? {
-        var d = Storage.getValue("data");
-        if (d instanceof Lang.Dictionary) {
-            return d;
+        if (!_memoSet) {
+            var d = Storage.getValue("data");
+            _memo = d instanceof Lang.Dictionary ? d : null;
+            _memoSet = true;
         }
-        return null;
+        return _memo;
     }
 
     function wellness() as Dictionary? {
@@ -55,7 +70,7 @@ module IntervalsData {
         if (d == null || !(d["dn"] instanceof Lang.Number)) {
             return 0;
         }
-        var gap = IntervalsApi.todayIdx() - (d["dn"] as Number);
+        var gap = IntervalsDays.todayIdx() - (d["dn"] as Number);
         return gap > 0 ? gap : 0;
     }
 

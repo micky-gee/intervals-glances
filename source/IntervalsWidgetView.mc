@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Application.Storage;
 import Toybox.Lang;
 import Toybox.Math;
 import Toybox.System;
@@ -19,6 +20,7 @@ class IntervalsWidgetView extends WatchUi.View {
     }
 
     function onUpdate(dc as Dc) as Void {
+        IntervalsData.beginFrame();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
 
@@ -201,12 +203,14 @@ class IntervalsWidgetView extends WatchUi.View {
             return;
         }
 
-        // Hero number, auto-fitted, in the zone color.
+        // Hero number, auto-fitted, in the zone color. Its size and the zone
+        // label's position are set so the two never touch: at the previous
+        // sizes the descender of the number met the top of the label.
         var zone = IntervalsData.formZoneColor();
         IntervalsUi.drawFit(dc, cx, h * 38 / 100, IntervalsData.formText(),
-            w * 60 / 100, w * 31 / 100, zone,
+            w * 60 / 100, w * 28 / 100, zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, h * 57 / 100, IntervalsData.formZoneLabel(),
+        IntervalsUi.drawFit(dc, cx, h * 58 / 100, IntervalsData.formZoneLabel(),
             w * 54 / 100, w * 75 / 1000, zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
@@ -223,13 +227,16 @@ class IntervalsWidgetView extends WatchUi.View {
         var colors = [IntervalsCharts.CTL_COLOR, IntervalsCharts.ATL_COLOR,
             Graphics.COLOR_WHITE] as Array<Number>;
 
-        var y = h * 72 / 100;
+        // The outer two columns sit a little further in than the thirds would
+        // put them: this row is low enough that the round screen has narrowed,
+        // and a label centred on a third would run into the bezel.
+        var y = h * 73 / 100;
         for (var i = 0; i < 3; i++) {
-            var x = w * (i * 28 + 22) / 100;
-            IntervalsUi.drawFit(dc, x, y, values[i], w * 27 / 100, w * 11 / 100, colors[i],
+            var x = w * (i * 26 + 24) / 100;
+            IntervalsUi.drawFit(dc, x, y, values[i], w * 26 / 100, w * 10 / 100, colors[i],
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.setColor(IntervalsUi.DIM, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, y + w * 84 / 1000, IntervalsUi.font(w * 44 / 1000), labels[i],
+            IntervalsUi.drawFit(dc, x, y + w * 92 / 1000, labels[i], w * 26 / 100,
+                w * 44 / 1000, IntervalsUi.DIM,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
@@ -519,16 +526,21 @@ class IntervalsWidgetView extends WatchUi.View {
         return [label, scaleWord(v), scaleUnit(v), IntervalsUi.SLATE, color];
     }
 
+
     hidden function statusItems() as Array {
         var err = IntervalsData.lastError();
+        // Ordered in pairs by how long the value tends to be: the middle row
+        // of a round screen is the widest, so the two longest values go there
+        // and shrink least. The top pair is about data freshness, the bottom
+        // pair about the account.
         return [
             ["UPDATED", IntervalsData.ageText(), "ago", IntervalsUi.SLATE],
-            ["ATHLETE", IntervalsSettings.athleteId(), "", IntervalsUi.SLATE],
-            authItem(),
-            ["STATUS", err != null ? err : "OK", "",
-                IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT],
             ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
-            ["VERSION", "0.11.6", "", IntervalsUi.SLATE]
+            authItem(),
+            ["VERSION", "0.11.12", "", IntervalsUi.SLATE],
+            ["ATHLETE", IntervalsSettings.athleteId(), "", IntervalsUi.SLATE],
+            ["STATUS", err != null ? err : "OK", "",
+                IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT]
         ];
     }
 

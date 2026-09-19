@@ -9,6 +9,7 @@ import Toybox.WatchUi;
 (:background :glance)
 class IntervalsApp extends Application.AppBase {
 
+
     function initialize() {
         AppBase.initialize();
     }
@@ -54,17 +55,34 @@ class IntervalsApp extends Application.AppBase {
         WatchUi.requestUpdate();
     }
 
+    // Wake and activity registrations persist on the device until they are
+    // unregistered, so re-registering them is only worth doing occasionally.
+    // This runs on the glance path, which the system enters every time the
+    // glance takes focus, and re-registering there made taking focus wait on
+    // two system calls that had nothing left to do.
+    const EVENT_REREG = 7 * 24 * 3600;
+
     hidden function scheduleBackground() as Void {
         // Sync when the data actually changes rather than on a fixed clock:
         // at wake (overnight wellness) and after activities (load), each of
         // which schedules a delayed sync. The temporal event is the scheduler
         // itself, re-armed after every fire.
-        if (Background has :registerForWakeEvent) {
-            Background.registerForWakeEvent();
+        var now = Time.now().value();
+        var last = Storage.getValue("bgReg");
+        // The clock going backwards would otherwise defer this indefinitely.
+        if (!(last instanceof Lang.Number) || now - last > EVENT_REREG || now < last) {
+            if (Background has :registerForWakeEvent) {
+                Background.registerForWakeEvent();
+            }
+            if (Background has :registerForActivityCompletedEvent) {
+                Background.registerForActivityCompletedEvent();
+            }
+            // ensureArmed() queries the system for the current registration,
+            // which is another call the glance path should not make on every
+            // focus. The background service re-arms itself after each fire, so
+            // this only has to be a safety net.
+            IntervalsSchedule.ensureArmed();
+            Storage.setValue("bgReg", now);
         }
-        if (Background has :registerForActivityCompletedEvent) {
-            Background.registerForActivityCompletedEvent();
-        }
-        IntervalsSchedule.ensureArmed();
     }
 }
