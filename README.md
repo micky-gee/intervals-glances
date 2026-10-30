@@ -24,9 +24,9 @@ More: [eFTP](docs/screenshots/05-eftp-ring.png) ·
 
 ## Features
 
-- **Glance** — a compact banded CTL/ATL chart (the form-zone colors at a
-  glance) with today's fitness and fatigue keyed in the line colors, the
-  current form value and data age, right in the widget carousel.
+- **Glance** — a full-height banded CTL/ATL chart (the form-zone colors at a
+  glance) with today's fitness, form and fatigue in a column beside it, each
+  in its line's color, right in the widget carousel.
 - **Form page** — big TSB value with zone label, plus Fitness and Fatigue as
   sparkline rows, annotated with the ramp rate.
 - **Polar load chart** — CTL and ATL wrapped around the bezel over the

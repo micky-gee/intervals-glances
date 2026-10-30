@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.12.1 — 2026-10-30
+
+**Glance: full-height chart.** The load chart now fills the glance's height.
+Today's numbers sit in a column over its oldest days, each in its line's
+colour: fitness, form (in its zone colour), fatigue. The header line and the
+data age are gone. Single-line glance modes show just their one number.
+
+**Polar load page: fitness and fatigue up front.** Fitness and fatigue take
+the widest row of the centre, as large as fits inside the chart; form and its
+zone sit together below.
+
 ## v0.12.0 — 2026-10-30
 
 **Data pages redrawn as sparkline tables.** Recovery, sleep, body, fuel and

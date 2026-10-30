@@ -280,47 +280,45 @@ class IntervalsWidgetView extends WatchUi.View {
             cx, cy, rIn, w * 47 / 100);
 
         var vc = Graphics.TEXT_JUSTIFY_VCENTER;
-        IntervalsUi.drawFit(dc, cx, cy - h * 165 / 1000,
+        IntervalsUi.drawFit(dc, cx, cy - h * 190 / 1000,
             busyLabel("LOAD " + windowLabel()),
-            w * 42 / 100, IntervalsUi.px(dc, 80), IntervalsUi.DIM,
+            w * 36 / 100, IntervalsUi.px(dc, 80), IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | vc);
 
-        // Fitness and fatigue flank form, each in its curve's colour, which
-        // is all the labelling they need. The three share one size, the
-        // largest at which the row clears the inner rim.
-        var zone = IntervalsData.formZoneColor();
-        var formStr = IntervalsData.formText();
+        // Fitness and fatigue take the widest row, each in its curve's
+        // colour, which is all the labelling they need: the largest size at
+        // which both clear the inner rim. Form and its zone sit below.
         var wd = IntervalsData.wellness();
         var fitStr = wd != null ? IntervalsData.fmt(wd["ctl"], 0) : "";
         var fatStr = wd != null ? IntervalsData.fmt(wd["atl"], 0) : "";
-        var ry = cy - h * 15 / 1000;
-        var s = w * 17 / 100;
+        var ry = cy - h * 50 / 1000;
+        var s = w * 21 / 100;
         var f = IntervalsUi.font(s);
-        var mid = 0;
         var gap = 0;
         while (true) {
             f = IntervalsUi.font(s);
-            mid = dc.getTextWidthInPixels(formStr, f) / 2;
-            gap = s / 2;
+            gap = s * 3 / 10;
             var side = dc.getTextWidthInPixels(fitStr, f);
             var fw = dc.getTextWidthInPixels(fatStr, f);
             if (fw > side) { side = fw; }
             var dy = s * 4 / 10;
-            var half = Math.sqrt(rIn * rIn - dy * dy).toNumber() - w * 2 / 100;
-            if (mid + gap + side <= half || s <= IntervalsUi.px(dc, IntervalsUi.TXT_HEAD)) {
+            var half = Math.sqrt(rIn * rIn - dy * dy).toNumber() - w * 3 / 100;
+            if (gap + side <= half || s <= IntervalsUi.px(dc, IntervalsUi.TXT_HEAD)) {
                 break;
             }
             s -= 2;
         }
-        dc.setColor(zone, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, ry, f, formStr, Graphics.TEXT_JUSTIFY_CENTER | vc);
         dc.setColor(IntervalsCharts.CTL_COLOR, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx - mid - gap, ry, f, fitStr, Graphics.TEXT_JUSTIFY_RIGHT | vc);
+        dc.drawText(cx - gap, ry, f, fitStr, Graphics.TEXT_JUSTIFY_RIGHT | vc);
         dc.setColor(IntervalsCharts.ATL_COLOR, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx + mid + gap, ry, f, fatStr, Graphics.TEXT_JUSTIFY_LEFT | vc);
+        dc.drawText(cx + gap, ry, f, fatStr, Graphics.TEXT_JUSTIFY_LEFT | vc);
 
-        IntervalsUi.drawFit(dc, cx, cy + h * 125 / 1000, IntervalsData.formZoneLabel(),
-            w * 46 / 100, IntervalsUi.px(dc, 80), zone,
+        var zone = IntervalsData.formZoneColor();
+        IntervalsUi.drawFit(dc, cx, cy + h * 85 / 1000, IntervalsData.formText(),
+            w * 34 / 100, w * 13 / 100, zone,
+            Graphics.TEXT_JUSTIFY_CENTER | vc);
+        IntervalsUi.drawFit(dc, cx, cy + h * 175 / 1000, IntervalsData.formZoneLabel(),
+            w * 36 / 100, IntervalsUi.px(dc, 80), zone,
             Graphics.TEXT_JUSTIFY_CENTER | vc);
     }
 
@@ -594,7 +592,7 @@ class IntervalsWidgetView extends WatchUi.View {
             ["DATA FROM", dataDate(), Graphics.COLOR_WHITE],
             authItem(),
             ["ATHLETE", IntervalsSettings.athleteId(), Graphics.COLOR_WHITE],
-            ["VERSION", "0.12.0", Graphics.COLOR_WHITE],
+            ["VERSION", "0.12.1", Graphics.COLOR_WHITE],
             ["STATUS", err != null ? err : "OK",
                 err != null ? IntervalsUi.CORAL : IntervalsUi.MINT]
         ];

@@ -56,40 +56,30 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
         if (ctl != null && atl != null) {
             var mode = IntervalsSettings.glanceMode();
 
-            // Header: the mode's headline number left, age right.
-            var head;
-            var headColor;
-            if (mode == 1) {
-                head = "Fit " + IntervalsData.fmt(wd["ctl"], 0);
-                headColor = CTL_COLOR;
-            } else if (mode == 2) {
-                head = "Fat " + IntervalsData.fmt(wd["atl"], 0);
-                headColor = ATL_COLOR;
-            } else {
-                head = "Form " + IntervalsData.formText();
-                headColor = IntervalsData.formZoneColor();
-            }
-            dc.setColor(headColor, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x0, hy, Graphics.FONT_GLANCE, head,
-                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x1, hy, Graphics.FONT_GLANCE, IntervalsData.ageText(),
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
-
-            // The chart can run nearly to the carousel focus bar; only the
-            // text needs the bigger inset.
-            var y0 = h * 34 / 100;
-            var y1 = h * 94 / 100;
+            // The chart takes the glance's full height, with today's numbers
+            // in a column over its oldest days, each in its line's colour.
+            var y0 = h * 4 / 100;
+            var y1 = h * 96 / 100;
             var gx0 = w * 3 / 100;
+            var fit = [IntervalsData.fmt(wd["ctl"], 0), CTL_COLOR];
+            var form = [IntervalsData.formText(), IntervalsData.formZoneColor()];
+            var fat = [IntervalsData.fmt(wd["atl"], 0), ATL_COLOR];
+            var key;
+            if (mode == 1) {
+                key = [fit];
+            } else if (mode == 2) {
+                key = [fat];
+            } else if (mode == 3) {
+                key = [form];
+            } else {
+                key = [fit, form, fat];
+            }
             if (mode == 3) {
                 drawMiniForm(dc, ctl, atl, gx0, x1, y0, y1);
-            } else if (mode == 0) {
-                drawMiniLoad(dc, ctl, atl, mode, gx0, x1, y0, y1);
-                drawLoadKey(dc, gx0, y0, y1, IntervalsData.fmt(wd["ctl"], 0),
-                    IntervalsData.fmt(wd["atl"], 0));
             } else {
                 drawMiniLoad(dc, ctl, atl, mode, gx0, x1, y0, y1);
             }
+            drawKey(dc, gx0, y0, y1, key);
             return;
         }
 
@@ -190,26 +180,32 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
         }
     }
 
-    // Today's fitness over fatigue, in their lines' colours, on a black
-    // panel laid over the oldest days of the chart: the least informative
-    // stretch of the curve, which keeps the chart its full width.
-    hidden function drawLoadKey(dc as Dc, x0 as Number, y0 as Number,
-            y1 as Number, fit as String, fat as String) as Void {
+    // Today's numbers stacked on a black panel laid over the oldest days
+    // of the chart: the least informative stretch of the curve, which keeps
+    // the chart its full width. key = [[text, colour], ...]
+    hidden function drawKey(dc as Dc, x0 as Number, y0 as Number,
+            y1 as Number, key as Array) as Void {
+        var n = key.size();
+        var rowH = (y1 - y0) / n;
         var f = Graphics.FONT_GLANCE;
-        var tw = dc.getTextWidthInPixels(fit, f);
-        var tw2 = dc.getTextWidthInPixels(fat, f);
-        if (tw2 > tw) { tw = tw2; }
+        if (Graphics.getFontAscent(f) > rowH) {
+            f = Graphics.FONT_XTINY;
+        }
+        var tw = 0;
+        for (var i = 0; i < n; i++) {
+            var t = dc.getTextWidthInPixels((key[i] as Array)[0] as String, f);
+            if (t > tw) { tw = t; }
+        }
         var pad = dc.getWidth() * 2 / 100;
-        var fh = Graphics.getFontAscent(f);
-        var cy = (y0 + y1) / 2;
         // From the glance's edge: the band strokes spill a little past x0.
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.fillRectangle(0, y0 - 2, x0 + tw + 2 * pad, y1 - y0 + 5);
         var just = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
-        dc.setColor(CTL_COLOR, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x0 + pad, cy - fh * 6 / 10, f, fit, just);
-        dc.setColor(ATL_COLOR, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x0 + pad, cy + fh * 6 / 10, f, fat, just);
+        for (var i = 0; i < n; i++) {
+            var k = key[i] as Array;
+            dc.setColor(k[1] as Number, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(x0 + pad, y0 + rowH * i + rowH / 2, f, k[0] as String, just);
+        }
     }
 
     // Form (ctl - atl) over its own zone bands; in form space the bands run
