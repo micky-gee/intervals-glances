@@ -74,7 +74,7 @@ module IntervalsRefresh {
             if (busy) {
                 return;
             }
-            var cold = IntervalsData.histDays() == 0 || missingKeys();
+            var cold = IntervalsData.histDays() == 0 || missingDepth() > 0;
             var age = IntervalsData.ageSecs();
             if (!cold && age != null && age < OPEN_STALE) {
                 return;
@@ -90,34 +90,45 @@ module IntervalsRefresh {
             run(IntervalsApi.MAX_HIST - 1, have, IntervalsApi.MAX_HIST);
         }
 
-        // True when a graph slot points at a metric the cache has no series
-        // for (the user changed a slot since the last sync).
-        hidden function missingKeys() as Boolean {
+        // Days back a sync must reach to fill series the cache lacks (0 when
+        // none): the whole cached span for a graph metric, but only the
+        // sparkline window for a data-page metric. Either happens when the
+        // user changes a page since the last sync.
+        hidden function missingDepth() as Number {
+            var have = IntervalsData.histDays();
             var d = IntervalsData.data();
             if (d == null || !(d["s"] instanceof Lang.Dictionary)) {
-                return true;
+                return have;
             }
             var s = d["s"] as Dictionary;
             var keys = IntervalsApi.selectedChartKeys();
             for (var i = 0; i < keys.size(); i++) {
                 if (!s.hasKey(keys[i])) {
-                    return true;
+                    return have;
                 }
             }
-            return false;
+            var p = IntervalsCache.loadSpark();
+            keys = IntervalsApi.selectedSparkKeys();
+            for (var i = 0; i < keys.size(); i++) {
+                if (!p.hasKey(keys[i])) {
+                    return have < IntervalsApi.SPARK_DAYS ? have : IntervalsApi.SPARK_DAYS;
+                }
+            }
+            return 0;
         }
 
         // How far back this sync must reach: just the mutable tail normally,
-        // the whole cached span when something is missing from it.
+        // further when a series is missing from the cache.
         hidden function plannedFrom() as Number {
             var have = IntervalsData.histDays();
             if (have <= 0) {
                 return IntervalsApi.INITIAL_HIST - 1;
             }
-            if (missingKeys()) {
-                return have - 1;
-            }
             var from = IntervalsData.daysSinceNewest() + IntervalsApi.DELTA_DAYS;
+            var missing = missingDepth() - 1;
+            if (missing > from) {
+                from = missing;
+            }
             return from > have - 1 ? have - 1 : from;
         }
 

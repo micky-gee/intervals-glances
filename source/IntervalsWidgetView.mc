@@ -50,23 +50,22 @@ class IntervalsWidgetView extends WatchUi.View {
         }
     }
 
-    // Map a data-page type key to its tile content.
+    // Map a data-page type key to its page.
     hidden function drawDataPage(dc as Dc, type as String) as Void {
         if (type.equals("form")) {
             drawFormPage(dc);
         } else if (type.equals("recovery")) {
-            drawTilesPage(dc, "RECOVERY", recoveryItems());
+            drawSparkPage(dc, "RECOVERY", type);
         } else if (type.equals("sleep")) {
-            drawTilesPage(dc, "SLEEP", sleepItems());
+            drawSparkPage(dc, "SLEEP", type);
         } else if (type.equals("body")) {
-            drawTilesPage(dc, "BODY", bodyItems());
+            drawSparkPage(dc, "BODY", type);
         } else if (type.equals("fuel")) {
-            drawTilesPage(dc, "FUEL + STEPS", fuelItems());
+            drawSparkPage(dc, "FUEL + STEPS", type);
         } else if (type.equals("feel")) {
-            drawTilesPage(dc, "HOW YOU FEEL", feelItems());
+            drawSparkPage(dc, "HOW YOU FEEL", type);
         } else {
-            drawTilesPage(dc, "STATUS", statusItems());
-            drawLinkHint(dc);
+            drawStatusPage(dc);
         }
     }
 
@@ -80,7 +79,7 @@ class IntervalsWidgetView extends WatchUi.View {
         IntervalsUi.drawFit(dc, dc.getWidth() / 2, dc.getHeight() * 89 / 100,
             IntervalsAuth.busy() ? "Open Garmin Connect on phone"
                 : "Press START to link OAuth",
-            dc.getWidth() * 70 / 100, dc.getWidth() * 52 / 1000, IntervalsUi.MINT,
+            dc.getWidth() * 70 / 100, IntervalsUi.px(dc, IntervalsUi.TXT_MIN), IntervalsUi.MINT,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -105,28 +104,25 @@ class IntervalsWidgetView extends WatchUi.View {
 
         if (IntervalsAuth.busy()) {
             IntervalsUi.drawFit(dc, cx, h * 70 / 100, "Open Garmin Connect",
-                w * 62 / 100, w * 6 / 100, IntervalsUi.MINT,
+                w * 62 / 100, IntervalsUi.px(dc, IntervalsUi.TXT_HEAD), IntervalsUi.MINT,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             IntervalsUi.drawFit(dc, cx, h * 78 / 100, "on your phone",
-                w * 62 / 100, w * 6 / 100, IntervalsUi.MINT,
+                w * 62 / 100, IntervalsUi.px(dc, IntervalsUi.TXT_HEAD), IntervalsUi.MINT,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
         IntervalsUi.drawFit(dc, cx, h * 68 / 100, "START  connect",
-            w * 50 / 100, w * 6 / 100, IntervalsUi.MINT,
+            w * 56 / 100, IntervalsUi.px(dc, IntervalsUi.TXT_HEAD), IntervalsUi.MINT,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         IntervalsUi.drawFit(dc, cx, h * 76 / 100, "DOWN  later",
-            w * 50 / 100, w * 6 / 100, IntervalsUi.DIM,
+            w * 56 / 100, IntervalsUi.px(dc, IntervalsUi.TXT_HEAD), IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Shown only when every page is set to "off".
     hidden function drawNonePage(dc as Dc) as Void {
         drawHeader(dc, "INTERVALS");
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2, Graphics.FONT_SMALL,
-            "Enable graph or data\npages in settings",
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawMessage(dc, "Enable graph or data\npages in settings");
     }
 
     // START opens this on chart pages: bold white +/- glyphs sitting next to
@@ -203,42 +199,27 @@ class IntervalsWidgetView extends WatchUi.View {
             return;
         }
 
-        // Hero number, auto-fitted, in the zone color. Its size and the zone
-        // label's position are set so the two never touch: at the previous
-        // sizes the descender of the number met the top of the label.
+        // Hero number in the zone colour, the zone named under it, then the
+        // two quantities form is the difference of, each with its history.
         var zone = IntervalsData.formZoneColor();
-        IntervalsUi.drawFit(dc, cx, h * 38 / 100, IntervalsData.formText(),
-            w * 60 / 100, w * 28 / 100, zone,
+        IntervalsUi.drawFit(dc, cx, h * 27 / 100, IntervalsData.formText(),
+            w * 50 / 100, w * 22 / 100, zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, h * 58 / 100, IntervalsData.formZoneLabel(),
-            w * 54 / 100, w * 75 / 1000, zone,
+        IntervalsUi.drawFit(dc, cx, h * 395 / 1000, IntervalsData.formZoneLabel(),
+            w * 64 / 100, IntervalsUi.px(dc, 85), zone,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        // Mini tiles for the load numbers.
+        // Ramp rate is the weekly change in fitness, so it annotates that row.
         var ramp = wd["rampRate"];
-        var rampStr = ramp == null ? "--"
-            : (ramp.toFloat() >= 0 ? "+" : "") + ramp.toFloat().format("%.1f");
-        var labels = ["FITNESS", "FATIGUE", "RAMP"] as Array<String>;
-        var values = [
-            IntervalsData.fmt(wd["ctl"], 0),
-            IntervalsData.fmt(wd["atl"], 0),
-            rampStr
-        ] as Array<String>;
-        var colors = [IntervalsCharts.CTL_COLOR, IntervalsCharts.ATL_COLOR,
-            Graphics.COLOR_WHITE] as Array<Number>;
-
-        // The outer two columns sit a little further in than the thirds would
-        // put them: this row is low enough that the round screen has narrowed,
-        // and a label centred on a third would run into the bezel.
-        var y = h * 73 / 100;
-        for (var i = 0; i < 3; i++) {
-            var x = w * (i * 26 + 24) / 100;
-            IntervalsUi.drawFit(dc, x, y, values[i], w * 26 / 100, w * 10 / 100, colors[i],
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            IntervalsUi.drawFit(dc, x, y + w * 92 / 1000, labels[i], w * 26 / 100,
-                w * 44 / 1000, IntervalsUi.DIM,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        }
+        var rampStr = ramp == null ? ""
+            : (ramp.toFloat() >= 0 ? "+" : "") + ramp.toFloat().format("%.1f") + "/wk";
+        var rows = [
+            ["FITNESS", rampStr, IntervalsData.fmt(wd["ctl"], 0),
+                IntervalsCharts.CTL_COLOR, Graphics.COLOR_WHITE, recent("ctl", null), false, ""],
+            ["FATIGUE", "", IntervalsData.fmt(wd["atl"], 0),
+                IntervalsCharts.ATL_COLOR, Graphics.COLOR_WHITE, recent("atl", null), false, ""]
+        ];
+        IntervalsUi.drawTable(dc, rows, h * 45 / 100, h * 87 / 100);
     }
 
     // ---- page 1: fitness/fatigue over time-varying form-zone bands ------
@@ -262,8 +243,10 @@ class IntervalsWidgetView extends WatchUi.View {
 
         drawHeader(dc, "LOAD " + windowLabel());
 
+        // Inset far enough that the axis labels left of the chart clear the
+        // bezel at the chart's top corner.
         IntervalsCharts.drawLoadChart(dc, ctl, atl,
-            w * 10 / 100, w * 90 / 100, h * 22 / 100, h * 72 / 100);
+            w * 15 / 100, w * 90 / 100, h * 22 / 100, h * 72 / 100);
 
         // Legend with current values and the form zone chip.
         var wd = IntervalsData.wellness();
@@ -292,32 +275,53 @@ class IntervalsWidgetView extends WatchUi.View {
         var cx = w / 2;
         var cy = h / 2;
 
+        var rIn = w * 28 / 100;
         IntervalsCharts.drawPolarLoadChart(dc, ctl, atl,
-            cx, cy, w * 28 / 100, w * 47 / 100);
+            cx, cy, rIn, w * 47 / 100);
 
-        var zone = IntervalsData.formZoneColor();
-        IntervalsUi.drawFit(dc, cx, cy - h * 172 / 1000,
+        var vc = Graphics.TEXT_JUSTIFY_VCENTER;
+        IntervalsUi.drawFit(dc, cx, cy - h * 165 / 1000,
             busyLabel("LOAD " + windowLabel()),
-            w * 42 / 100, w * 53 / 1000, IntervalsUi.DIM,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy - h * 31 / 1000, IntervalsData.formText(),
-            w * 46 / 100, w * 19 / 100, zone,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + h * 97 / 1000, IntervalsData.formZoneLabel(),
-            w * 42 / 100, w * 62 / 1000, zone,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            w * 42 / 100, IntervalsUi.px(dc, 80), IntervalsUi.DIM,
+            Graphics.TEXT_JUSTIFY_CENTER | vc);
 
+        // Fitness and fatigue flank form, each in its curve's colour, which
+        // is all the labelling they need. The three share one size, the
+        // largest at which the row clears the inner rim.
+        var zone = IntervalsData.formZoneColor();
+        var formStr = IntervalsData.formText();
         var wd = IntervalsData.wellness();
-        if (wd != null) {
-            IntervalsUi.drawFit(dc, cx - w * 11 / 100, cy + h * 176 / 1000,
-                "Fit " + IntervalsData.fmt(wd["ctl"], 0), w * 20 / 100, w * 75 / 1000,
-                IntervalsCharts.CTL_COLOR,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            IntervalsUi.drawFit(dc, cx + w * 11 / 100, cy + h * 176 / 1000,
-                "Fat " + IntervalsData.fmt(wd["atl"], 0), w * 20 / 100, w * 75 / 1000,
-                IntervalsCharts.ATL_COLOR,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        var fitStr = wd != null ? IntervalsData.fmt(wd["ctl"], 0) : "";
+        var fatStr = wd != null ? IntervalsData.fmt(wd["atl"], 0) : "";
+        var ry = cy - h * 15 / 1000;
+        var s = w * 17 / 100;
+        var f = IntervalsUi.font(s);
+        var mid = 0;
+        var gap = 0;
+        while (true) {
+            f = IntervalsUi.font(s);
+            mid = dc.getTextWidthInPixels(formStr, f) / 2;
+            gap = s / 2;
+            var side = dc.getTextWidthInPixels(fitStr, f);
+            var fw = dc.getTextWidthInPixels(fatStr, f);
+            if (fw > side) { side = fw; }
+            var dy = s * 4 / 10;
+            var half = Math.sqrt(rIn * rIn - dy * dy).toNumber() - w * 2 / 100;
+            if (mid + gap + side <= half || s <= IntervalsUi.px(dc, IntervalsUi.TXT_HEAD)) {
+                break;
+            }
+            s -= 2;
         }
+        dc.setColor(zone, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, ry, f, formStr, Graphics.TEXT_JUSTIFY_CENTER | vc);
+        dc.setColor(IntervalsCharts.CTL_COLOR, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx - mid - gap, ry, f, fitStr, Graphics.TEXT_JUSTIFY_RIGHT | vc);
+        dc.setColor(IntervalsCharts.ATL_COLOR, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx + mid + gap, ry, f, fatStr, Graphics.TEXT_JUSTIFY_LEFT | vc);
+
+        IntervalsUi.drawFit(dc, cx, cy + h * 125 / 1000, IntervalsData.formZoneLabel(),
+            w * 46 / 100, IntervalsUi.px(dc, 80), zone,
+            Graphics.TEXT_JUSTIFY_CENTER | vc);
     }
 
     // ---- configurable metric chart pages ---------------------------------
@@ -346,9 +350,7 @@ class IntervalsWidgetView extends WatchUi.View {
             w * 16 / 100, w * 88 / 100, h * 22 / 100, h * 70 / 100,
             IntervalsCharts.hasBaseline(key));
         if (!ok) {
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, h / 2, Graphics.FONT_SMALL, "No data in window",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            drawMessage(dc, "No data in window");
             return;
         }
 
@@ -371,8 +373,8 @@ class IntervalsWidgetView extends WatchUi.View {
             w * 42 / 100, w * 13 / 100, color,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         IntervalsUi.drawFit(dc, w / 2, h * 87 / 100,
-            "min " + minV.format(fmtStr) + "    max " + maxV.format(fmtStr),
-            w * 58 / 100, w * 53 / 1000, IntervalsUi.DIM,
+            "min " + minV.format(fmtStr) + "   max " + maxV.format(fmtStr),
+            w * 62 / 100, IntervalsUi.px(dc, IntervalsUi.TXT_LABEL), IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -400,9 +402,7 @@ class IntervalsWidgetView extends WatchUi.View {
             IntervalsCharts.hasBaseline(key));
         if (!ok) {
             drawHeader(dc, label);
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, cy, Graphics.FONT_SMALL, "No data in window",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            drawMessage(dc, "No data in window");
             return;
         }
 
@@ -420,139 +420,199 @@ class IntervalsWidgetView extends WatchUi.View {
             }
         }
         var fmtStr = "%." + dec + "f";
-        IntervalsUi.drawFit(dc, cx, cy - h * 172 / 1000,
+        IntervalsUi.drawFit(dc, cx, cy - h * 175 / 1000,
             busyLabel(label),
-            w * 42 / 100, w * 62 / 1000, color,
+            w * 46 / 100, IntervalsUi.px(dc, 80), color,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy - h * 18 / 1000, cur.format(fmtStr),
-            w * 50 / 100, w * 22 / 100, Graphics.COLOR_WHITE,
+        IntervalsUi.drawFit(dc, cx, cy - h * 40 / 1000, cur.format(fmtStr),
+            w * 48 / 100, w * 19 / 100, Graphics.COLOR_WHITE,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + h * 123 / 1000,
+        IntervalsUi.drawFit(dc, cx, cy + h * 92 / 1000,
             minV.format(fmtStr) + " - " + maxV.format(fmtStr),
-            w * 42 / 100, w * 57 / 1000, IntervalsUi.DIM,
+            w * 52 / 100, IntervalsUi.px(dc, 90), IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        IntervalsUi.drawFit(dc, cx, cy + h * 185 / 1000, windowLabel(),
-            w * 30 / 100, w * 48 / 1000, IntervalsUi.DIM,
+        IntervalsUi.drawFit(dc, cx, cy + h * 182 / 1000, windowLabel(),
+            w * 34 / 100, IntervalsUi.px(dc, 80), IntervalsUi.DIM,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    // ---- stat tile pages --------------------------------------------------
+    // ---- sparkline table pages --------------------------------------------
 
-    hidden function drawTilesPage(dc as Dc, title as String, items as Array) as Void {
+    // A data page is a table of its metrics' recent history (see
+    // IntervalsUi.drawTable). Rows the athlete has no data for are left out
+    // rather than shown as dashes, so the rows that remain can be large.
+    hidden function drawSparkPage(dc as Dc, title as String, type as String) as Void {
+        var h = dc.getHeight();
         drawHeader(dc, title);
-        if (items.size() == 0) {
+        var wd = IntervalsData.wellness();
+        if (wd == null) {
             drawEmptyState(dc);
             return;
         }
-        IntervalsUi.drawTiles(dc, items);
-    }
-
-    hidden function recoveryItems() as Array {
-        var w = IntervalsData.wellness();
-        if (w == null) { return []; }
-        return [
-            ["REST HR", IntervalsData.fmt(w["restingHR"], 0), "bpm", IntervalsUi.CORAL],
-            ["HRV", IntervalsData.fmt(w["hrv"], 0), "ms", IntervalsUi.TEAL],
-            ["SDNN", IntervalsData.fmt(w["hrvSDNN"], 0), "ms", IntervalsUi.TEAL],
-            ["SLEEP HR", IntervalsData.fmt(w["avgSleepingHR"], 0), "bpm", IntervalsUi.PINK],
-            ["READINESS", IntervalsData.fmt(w["readiness"], 0), "", IntervalsUi.MINT],
-            ["STRESS IDX", IntervalsData.fmt(w["baevskySI"], 1), "", IntervalsUi.AMBER]
-        ];
-    }
-
-    hidden function sleepItems() as Array {
-        var w = IntervalsData.wellness();
-        if (w == null) { return []; }
-        return [
-            ["SLEEP", IntervalsData.fmtSleep(w["sleepSecs"]), "", IntervalsUi.VIOLET],
-            ["SCORE", IntervalsData.fmt(w["sleepScore"], 0), "", IntervalsUi.BLUE],
-            ["QUALITY", scaleWord(w["sleepQuality"]), scaleUnit(w["sleepQuality"]), IntervalsUi.VIOLET],
-            ["RESP", IntervalsData.fmt(w["respiration"], 1), "brpm", IntervalsUi.BLUE],
-            ["SPO2", IntervalsData.fmt(w["spO2"], 0), w["spO2"] == null ? "" : "%", IntervalsUi.PINK]
-        ];
-    }
-
-    hidden function bodyItems() as Array {
-        var w = IntervalsData.wellness();
-        if (w == null) { return []; }
-        var bp = "--";
-        if (w["systolic"] != null && w["diastolic"] != null) {
-            bp = w["systolic"].format("%d") + "/" + w["diastolic"].format("%d");
+        // One Storage read per frame for every row's history.
+        var sp = IntervalsCache.loadSpark();
+        var keys = IntervalsApi.pageKeys(type);
+        var rows = [];
+        for (var i = 0; i < keys.size() && rows.size() < IntervalsUi.MAX_ROWS; i++) {
+            var row = rowFor(keys[i], wd, recent(keys[i], sp));
+            if (row != null) {
+                rows.add(row);
+            }
         }
-        return [
-            ["WEIGHT", IntervalsData.fmt(w["weight"], 1), w["weight"] == null ? "" : "kg", IntervalsUi.AMBER],
-            ["BODY FAT", IntervalsData.fmt(w["bodyFat"], 1), w["bodyFat"] == null ? "" : "%", IntervalsUi.AMBER],
-            ["VO2MAX", IntervalsData.fmt(w["vo2max"], 1), "", IntervalsUi.MINT],
-            ["BP", bp, "", IntervalsUi.CORAL],
-            ["GLUCOSE", IntervalsData.fmt(w["bloodGlucose"], 1), "", IntervalsUi.PINK]
-        ];
+        if (rows.size() == 0) {
+            drawMessage(dc, "Nothing logged in\nthe last 30 days");
+            return;
+        }
+        IntervalsUi.drawTable(dc, rows, h * 17 / 100, h * 87 / 100);
     }
 
-    hidden function fuelItems() as Array {
-        var w = IntervalsData.wellness();
-        if (w == null) { return []; }
-        return [
-            ["CALORIES", IntervalsData.fmt(w["kcalConsumed"], 0), "", IntervalsUi.AMBER],
-            ["CARBS", IntervalsData.fmt(w["carbohydrates"], 0), grams(w["carbohydrates"]), IntervalsUi.LIME],
-            ["PROTEIN", IntervalsData.fmt(w["protein"], 0), grams(w["protein"]), IntervalsUi.BLUE],
-            ["FAT", IntervalsData.fmt(w["fatTotal"], 0), grams(w["fatTotal"]), IntervalsUi.PINK],
-            ["WATER", IntervalsData.fmt(w["hydrationVolume"], 1), w["hydrationVolume"] == null ? "" : "l", IntervalsUi.TEAL],
-            ["STEPS", IntervalsData.fmt(w["steps"], 0), "", IntervalsUi.MINT]
-        ];
+    // The last SPARK_DAYS of a key's history, from the sparkline store or,
+    // for a metric that is also on a graph page, the chart series.
+    hidden function recent(key as String, sp as Dictionary?) as Array? {
+        var a = sp != null ? sp[key] : null;
+        if (!(a instanceof Lang.Array) || a.size() < 2) {
+            a = IntervalsData.series(key);
+        }
+        if (a == null) {
+            return null;
+        }
+        var n = IntervalsApi.SPARK_DAYS;
+        if (a.size() <= n) {
+            return a;
+        }
+        return a.slice(a.size() - n, null);
     }
 
-    hidden function feelItems() as Array {
-        var w = IntervalsData.wellness();
-        if (w == null) { return []; }
-        return [
-            feelItem("FATIGUE", w["fatigue"]),
-            feelItem("SORENESS", w["soreness"]),
-            feelItem("STRESS", w["stress"]),
-            feelItem("MOOD", w["mood"]),
-            feelItem("MOTIVATION", w["motivation"]),
-            feelItem("INJURY", w["injury"])
-        ];
+    // Row kinds: how a metric's current value is written.
+    const NUM = 0;
+    const ORDINAL = 1;     // 1..4 subjective scale, as a word
+    const DURATION = 2;    // seconds, as 7h31
+    const PRESSURE = 3;    // systolic/diastolic
+
+    // [label, unit, decimals, accent, kind] for a data-page metric key.
+    hidden function rowDef(key as String) as Array {
+        if (key.equals("restingHR")) { return ["REST HR", "bpm", 0, IntervalsUi.CORAL, NUM]; }
+        if (key.equals("hrv")) { return ["HRV", "ms", 0, IntervalsUi.TEAL, NUM]; }
+        if (key.equals("avgSleepingHR")) { return ["SLEEP HR", "bpm", 0, IntervalsUi.PINK, NUM]; }
+        if (key.equals("readiness")) { return ["READINESS", "", 0, IntervalsUi.MINT, NUM]; }
+        if (key.equals("hrvSDNN")) { return ["SDNN", "ms", 0, IntervalsUi.TEAL, NUM]; }
+        if (key.equals("baevskySI")) { return ["STRESS IDX", "", 1, IntervalsUi.AMBER, NUM]; }
+        if (key.equals("sleepSecs")) { return ["SLEEP", "", 0, IntervalsUi.VIOLET, DURATION]; }
+        if (key.equals("sleepScore")) { return ["SCORE", "", 0, IntervalsUi.BLUE, NUM]; }
+        if (key.equals("sleepQuality")) { return ["QUALITY", "", 0, IntervalsUi.VIOLET, ORDINAL]; }
+        if (key.equals("respiration")) { return ["RESP", "brpm", 1, IntervalsUi.BLUE, NUM]; }
+        if (key.equals("spO2")) { return ["SPO2", "%", 0, IntervalsUi.PINK, NUM]; }
+        if (key.equals("weight")) { return ["WEIGHT", "kg", 1, IntervalsUi.AMBER, NUM]; }
+        if (key.equals("bodyFat")) { return ["BODY FAT", "%", 1, IntervalsUi.AMBER, NUM]; }
+        if (key.equals("vo2max")) { return ["VO2MAX", "", 1, IntervalsUi.MINT, NUM]; }
+        if (key.equals("systolic")) { return ["BP", "mmHg", 0, IntervalsUi.CORAL, PRESSURE]; }
+        if (key.equals("bloodGlucose")) { return ["GLUCOSE", "", 1, IntervalsUi.PINK, NUM]; }
+        if (key.equals("steps")) { return ["STEPS", "", 0, IntervalsUi.MINT, NUM]; }
+        if (key.equals("kcalConsumed")) { return ["CALORIES", "kcal", 0, IntervalsUi.AMBER, NUM]; }
+        if (key.equals("carbohydrates")) { return ["CARBS", "g", 0, IntervalsUi.LIME, NUM]; }
+        if (key.equals("protein")) { return ["PROTEIN", "g", 0, IntervalsUi.BLUE, NUM]; }
+        if (key.equals("fatTotal")) { return ["FAT", "g", 0, IntervalsUi.PINK, NUM]; }
+        if (key.equals("hydrationVolume")) { return ["WATER", "l", 1, IntervalsUi.TEAL, NUM]; }
+        // The subjective scales: colour belongs to the value's severity, so
+        // the labels stay neutral.
+        return [key.toUpper(), "", 0, IntervalsUi.SLATE, ORDINAL];
     }
 
-    // Subjective 1 (best) .. 4 (worst): word value tinted by severity.
-    hidden function feelItem(label as String, v) as Array {
-        var colors = [IntervalsUi.MINT, IntervalsUi.BLUE,
-            IntervalsUi.AMBER, IntervalsUi.CORAL] as Array<Number>;
+    // A table row for one metric, or null when there is nothing to show:
+    // no current value and no history in the window.
+    hidden function rowFor(key as String, wd as Dictionary, series as Array?) as Array? {
+        var v = wd[key];
+        if (series != null && !hasValue(series)) {
+            series = null;
+        }
+        if (v == null && series == null) {
+            return null;
+        }
+        var def = rowDef(key);
+        var kind = def[4] as Number;
+        var text;
         var color = Graphics.COLOR_WHITE;
-        var i = v == null ? -1 : v.toNumber() - 1;
-        if (i >= 0 && i <= 3) {
-            color = colors[i];
+        if (kind == ORDINAL) {
+            text = scaleWord(v);
+            color = IntervalsUi.severityColor(v);
+        } else if (kind == DURATION) {
+            text = IntervalsData.fmtSleep(v);
+        } else if (kind == PRESSURE) {
+            text = v != null && wd["diastolic"] != null
+                ? v.format("%d") + "/" + wd["diastolic"].format("%d") : "--";
+        } else {
+            text = IntervalsData.fmt(v, def[2] as Number);
         }
-        return [label, scaleWord(v), scaleUnit(v), IntervalsUi.SLATE, color];
+        return [def[0], def[1], text, def[3], color, series, kind == ORDINAL,
+            rangeText(series, kind, def[2] as Number)];
     }
 
+    // "30d: lo - hi" over a row's history, for the single-metric layout;
+    // empty for scales and pairs, or when there is no spread to report.
+    hidden function rangeText(series as Array?, kind as Number, dec as Number) as String {
+        if (series == null || kind == ORDINAL || kind == PRESSURE) {
+            return "";
+        }
+        var lo = null;
+        var hi = null;
+        for (var i = 0; i < series.size(); i++) {
+            var v = series[i];
+            if (v != null) {
+                if (lo == null || v < lo) { lo = v; }
+                if (hi == null || v > hi) { hi = v; }
+            }
+        }
+        if (lo == null || lo == hi) {
+            return "";
+        }
+        var a = kind == DURATION ? IntervalsData.fmtSleep(lo) : IntervalsData.fmt(lo, dec);
+        var b = kind == DURATION ? IntervalsData.fmtSleep(hi) : IntervalsData.fmt(hi, dec);
+        return IntervalsApi.SPARK_DAYS + "d: " + a + " - " + b;
+    }
 
-    hidden function statusItems() as Array {
+    hidden function hasValue(a as Array) as Boolean {
+        for (var i = 0; i < a.size(); i++) {
+            if (a[i] != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ---- status ------------------------------------------------------------
+
+    hidden function drawStatusPage(dc as Dc) as Void {
+        var h = dc.getHeight();
+        drawHeader(dc, "STATUS");
         var err = IntervalsData.lastError();
-        // Ordered in pairs by how long the value tends to be: the middle row
-        // of a round screen is the widest, so the two longest values go there
-        // and shrink least. The top pair is about data freshness, the bottom
-        // pair about the account.
-        return [
-            ["UPDATED", IntervalsData.ageText(), "ago", IntervalsUi.SLATE],
-            ["DATA FROM", dataDate(), "", IntervalsUi.SLATE],
+        var age = IntervalsData.ageText();
+        if (IntervalsData.ageSecs() != null && !age.equals("now")) {
+            age += " ago";
+        }
+        var items = [
+            ["UPDATED", age, Graphics.COLOR_WHITE],
+            ["DATA FROM", dataDate(), Graphics.COLOR_WHITE],
             authItem(),
-            ["VERSION", "0.11.12", "", IntervalsUi.SLATE],
-            ["ATHLETE", IntervalsSettings.athleteId(), "", IntervalsUi.SLATE],
-            ["STATUS", err != null ? err : "OK", "",
-                IntervalsUi.SLATE, err != null ? IntervalsUi.CORAL : IntervalsUi.MINT]
+            ["ATHLETE", IntervalsSettings.athleteId(), Graphics.COLOR_WHITE],
+            ["VERSION", "0.12.0", Graphics.COLOR_WHITE],
+            ["STATUS", err != null ? err : "OK",
+                err != null ? IntervalsUi.CORAL : IntervalsUi.MINT]
         ];
+        // Leave the bottom clear for the link prompt when it shows.
+        var linked = IntervalsSettings.oauthToken() != null;
+        IntervalsUi.drawPairs(dc, items, h * 17 / 100, linked ? h * 87 / 100 : h * 82 / 100);
+        drawLinkHint(dc);
     }
 
     // OAuth (mint) / legacy API key (amber) / not connected (coral).
     hidden function authItem() as Array {
         if (IntervalsSettings.oauthToken() != null) {
-            return ["AUTH", "OAuth", "", IntervalsUi.SLATE, IntervalsUi.MINT];
+            return ["AUTH", "OAuth", IntervalsUi.MINT];
         }
         if (IntervalsSettings.apiKey() != null) {
-            return ["AUTH", "API key", "legacy", IntervalsUi.SLATE, IntervalsUi.AMBER];
+            return ["AUTH", "API key", IntervalsUi.AMBER];
         }
-        return ["AUTH", "none", "", IntervalsUi.SLATE, IntervalsUi.CORAL];
+        return ["AUTH", "none", IntervalsUi.CORAL];
     }
 
     hidden function dataDate() as String {
@@ -575,23 +635,12 @@ class IntervalsWidgetView extends WatchUi.View {
         return words[i];
     }
 
-    hidden function scaleUnit(v) as String {
-        if (v == null) {
-            return "";
-        }
-        return v.format("%d") + "/4";
-    }
-
-    hidden function grams(v) as String {
-        return v == null ? "" : "g";
-    }
-
     // ---- shared chrome ----------------------------------------------------
 
     hidden function drawHeader(dc as Dc, title as String) as Void {
         IntervalsUi.drawFit(dc, dc.getWidth() / 2, dc.getHeight() * 11 / 100,
             busyLabel(title),
-            dc.getWidth() * 62 / 100, dc.getWidth() * 57 / 1000, 0x55AAFF,
+            dc.getWidth() * 66 / 100, IntervalsUi.px(dc, IntervalsUi.TXT_HEAD), 0x55AAFF,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -607,9 +656,15 @@ class IntervalsWidgetView extends WatchUi.View {
             var err = IntervalsData.lastError();
             msg = err != null ? err : "Waiting for data...\nPress START to sync";
         }
+        drawMessage(dc, msg);
+    }
+
+    // Centred grey notice, set like the page headers.
+    hidden function drawMessage(dc as Dc, msg as String) as Void {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2, Graphics.FONT_SMALL,
-            msg, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2,
+            IntervalsUi.font(IntervalsUi.px(dc, IntervalsUi.TXT_HEAD)), msg,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     hidden function drawPageDots(dc as Dc, count as Number) as Void {

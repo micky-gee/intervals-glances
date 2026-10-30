@@ -103,31 +103,36 @@ module IntervalsCharts {
         var hi = range[1] as Float;
         var scale = (y1 - y0).toFloat() / (hi - lo);
 
-        // Band underlay. Drawn on a column budget rather than per pixel, with
-        // the pen widened to match, so a wider screen costs no more.
-        var cols = fillSteps(x1 - x0, 3);
-        var xStep = (x1 - x0) / cols;
-        if (xStep < 1) { xStep = 1; }
-        dc.setPenWidth(xStep + 1);
-        for (var x = x0; x <= x1; x += xStep) {
-            var t = (x - x0).toFloat() / (x1 - x0) * (n - 1);
+        // Band underlay: zone edges traced per column step, each zone filled
+        // as polygons between them, so the edges run smooth rather than as a
+        // staircase of strokes.
+        var steps = edgeSteps(x1 - x0, n);
+        var xs = new Array<Number>[(steps + 1) * 6];
+        var ys = new Array<Number>[(steps + 1) * 6];
+        for (var s = 0; s <= steps; s++) {
+            var x = x0 + (x1 - x0) * s / steps;
+            var t = s.toFloat() / steps * (n - 1);
             var i = t.toNumber();
             var i2 = i + 1 < n ? i + 1 : i;
             var fr = t - i;
             var c = ctl[i].toFloat() * (1 - fr) + ctl[i2].toFloat() * fr;
 
             var prevY = y1;
-            for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? bandEdge(c, z, pct) : hi;
-                var yTop = y1 - ((bandTop - lo) * scale).toNumber();
-                if (yTop < y0) { yTop = y0; }
-                if (yTop < prevY) {
-                    dc.setColor(ZONE_FILLS[z], Graphics.COLOR_TRANSPARENT);
-                    dc.drawLine(x, prevY, x, yTop);
-                    prevY = yTop;
+            for (var e = 0; e < 6; e++) {
+                var y = y0;
+                if (e == 0) {
+                    y = y1;
+                } else if (e < 5) {
+                    y = y1 - ((bandEdge(c, e - 1, pct) - lo) * scale).toNumber();
+                    if (y < y0) { y = y0; }
+                    if (y > prevY) { y = prevY; }
                 }
+                prevY = y;
+                xs[s * 6 + e] = x;
+                ys[s * 6 + e] = y;
             }
         }
+        fillBands(dc, xs, ys, steps);
 
         // Labeled gridlines at round numbers.
         var step = niceStep(hi - lo);
@@ -137,7 +142,7 @@ module IntervalsCharts {
             dc.setColor(0x4D4D4D, Graphics.COLOR_TRANSPARENT);
             dc.drawLine(x0, gy, x1, gy);
             dc.setColor(0x808080, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x0 - 6, gy, IntervalsUi.font(dc.getWidth() * 33 / 1000), gv.format("%d"),
+            dc.drawText(x0 - 6, gy, IntervalsUi.font(IntervalsUi.px(dc, IntervalsUi.TXT_MIN)), gv.format("%d"),
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
             gv += step;
         }
@@ -201,7 +206,7 @@ module IntervalsCharts {
             dc.drawLine(x0, gy, x1, gy);
             var gv = minV + (maxV - minV) * g / 2;
             dc.setColor(0x808080, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x0 - 6, gy, Graphics.FONT_XTINY, gv.format("%.0f"),
+            dc.drawText(x0 - 6, gy, IntervalsUi.font(IntervalsUi.px(dc, IntervalsUi.TXT_MIN)), gv.format("%.0f"),
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
@@ -297,13 +302,14 @@ module IntervalsCharts {
         var hi = range[1] as Float;
         var scale = (rOut - rIn) / (hi - lo);
 
-        // Band underlay: one spoke per angle step, wide enough to overlap.
-        // The step count follows the outer arc length up to a fixed budget,
-        // and the pen is widened to match the resulting spacing so the fill
-        // stays solid however few spokes are drawn.
+        // Band underlay: the zone edges are traced at each angle step and
+        // each zone filled as polygons between its lower and upper edge.
+        // (Thick overlapping spokes, drawn before, left a sawtooth wherever
+        // one spoke's lower zones overpainted its neighbour's upper ones.)
         var arcLen = (2.0 * Math.PI * rOut * (RING_SWEEP_DEG / 360.0)).toNumber();
-        var steps = fillSteps(arcLen, 5);
-        dc.setPenWidth(arcLen / steps + 2);
+        var steps = edgeSteps(arcLen, n);
+        var xs = new Array<Number>[(steps + 1) * 6];
+        var ys = new Array<Number>[(steps + 1) * 6];
         for (var s = 0; s <= steps; s++) {
             var t = s.toFloat() / steps * (n - 1);
             var i = t.toNumber();
@@ -316,19 +322,23 @@ module IntervalsCharts {
             var cosv = Math.cos(rad);
             var sinv = Math.sin(rad);
 
+            // Edge 0 is the inner rim, 1..4 the zone boundaries, 5 the rim.
             var prevR = rIn;
-            for (var z = 0; z < 5; z++) {
-                var bandTop = z < 4 ? bandEdge(c, z, pct) : hi;
-                var r2 = rIn + ((bandTop - lo) * scale).toNumber();
-                if (r2 > rOut) { r2 = rOut; }
-                if (r2 > prevR) {
-                    dc.setColor(ZONE_FILLS[z], Graphics.COLOR_TRANSPARENT);
-                    dc.drawLine(cx + (prevR * cosv).toNumber(), cy - (prevR * sinv).toNumber(),
-                        cx + (r2 * cosv).toNumber(), cy - (r2 * sinv).toNumber());
-                    prevR = r2;
+            for (var e = 0; e < 6; e++) {
+                var r = rOut;
+                if (e == 0) {
+                    r = rIn;
+                } else if (e < 5) {
+                    r = rIn + ((bandEdge(c, e - 1, pct) - lo) * scale).toNumber();
+                    if (r > rOut) { r = rOut; }
+                    if (r < prevR) { r = prevR; }
                 }
+                prevR = r;
+                xs[s * 6 + e] = cx + (r * cosv).toNumber();
+                ys[s * 6 + e] = cy - (r * sinv).toNumber();
             }
         }
+        fillBands(dc, xs, ys, steps);
 
         // Faint radial time spokes every 30 days back from today.
         dc.setPenWidth(1);
@@ -352,7 +362,7 @@ module IntervalsCharts {
             var ly = cy + r;
             if (ly < cy * 2 - 28) {
                 dc.setColor(0x808080, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, ly, IntervalsUi.font(dc.getWidth() * 33 / 1000), gv.format("%d"),
+                dc.drawText(cx, ly, IntervalsUi.font(IntervalsUi.px(dc, IntervalsUi.TXT_MIN)), gv.format("%d"),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             }
             gv += step;
@@ -396,20 +406,55 @@ module IntervalsCharts {
         }
     }
 
-    // Strokes for a fill: one per PITCH pixels of the span, capped so the cost
-    // is bounded on a large screen instead of growing with it. Keeping the
-    // pitch small keeps the pen narrow, so the fill still stops cleanly at the
-    // chart edge instead of spilling past it.
-    function fillSteps(span as Number, pitch as Number) as Number {
-        var n = span / pitch;
-        if (n > BAND_MAX) { n = BAND_MAX; }
-        if (n < 8) { n = 8; }
-        return n;
+    // Fill the five zone bands from traced edges: point (xs, ys)[s * 6 + e]
+    // is edge e (0 = baseline, 5 = far limit) at step s, and zone z lies
+    // between edges z and z + 1. One polygon per zone per chunk of steps,
+    // since a polygon is capped at 64 points; a zone with no thickness in a
+    // chunk is skipped rather than drawn as a hairline.
+    const BAND_CHUNK = 30;
+
+    function fillBands(dc as Dc, xs as Array<Number>, ys as Array<Number>,
+            steps as Number) as Void {
+        for (var z = 0; z < 5; z++) {
+            dc.setColor(ZONE_FILLS[z], Graphics.COLOR_TRANSPARENT);
+            for (var s0 = 0; s0 < steps; s0 += BAND_CHUNK) {
+                var s1 = s0 + BAND_CHUNK < steps ? s0 + BAND_CHUNK : steps;
+                var thick = false;
+                for (var s = s0; s <= s1 && !thick; s++) {
+                    var a = s * 6 + z;
+                    thick = xs[a] != xs[a + 1] || ys[a] != ys[a + 1];
+                }
+                if (!thick) {
+                    continue;
+                }
+                var poly = [];
+                for (var s = s0; s <= s1; s++) {
+                    poly.add([xs[s * 6 + z + 1], ys[s * 6 + z + 1]]);
+                }
+                for (var s = s1; s >= s0; s--) {
+                    poly.add([xs[s * 6 + z], ys[s * 6 + z]]);
+                }
+                dc.fillPolygon(poly);
+            }
+        }
     }
 
-    // Removing antialiasing is what makes these fills affordable; the step cap
-    // is a second, smaller saving that also bounds the worst case on the
-    // widest screens.
+    // Steps at which to trace the zone edges. CTL is interpolated linearly
+    // between days, so one step per day is already exact; the floor of one
+    // per EDGE_PITCH pixels only keeps short windows curving smoothly round
+    // the ring. Far fewer steps than a stroke fill needs, which matters on
+    // MIP watches, where the polar chart has tripped the watchdog before.
+    const EDGE_PITCH = 20;
+
+    function edgeSteps(span as Number, n as Number) as Number {
+        var steps = span / EDGE_PITCH;
+        if (n - 1 > steps) { steps = n - 1; }
+        if (steps > BAND_MAX) { steps = BAND_MAX; }
+        if (steps < 8) { steps = 8; }
+        return steps;
+    }
+
+    // Bounds the worst case: a 90-day window on the widest screens.
     const BAND_MAX = 160;
 
     const RING_START_DEG = 240.0;

@@ -83,6 +83,10 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
             var gx0 = w * 3 / 100;
             if (mode == 3) {
                 drawMiniForm(dc, ctl, atl, gx0, x1, y0, y1);
+            } else if (mode == 0) {
+                drawMiniLoad(dc, ctl, atl, mode, gx0, x1, y0, y1);
+                drawLoadKey(dc, gx0, y0, y1, IntervalsData.fmt(wd["ctl"], 0),
+                    IntervalsData.fmt(wd["atl"], 0));
             } else {
                 drawMiniLoad(dc, ctl, atl, mode, gx0, x1, y0, y1);
             }
@@ -184,6 +188,28 @@ class IntervalsGlanceView extends WatchUi.GlanceView {
         if (mode != 2) {
             drawMiniLine(dc, ctl, lo, scale, x0, x1, y0, y1, CTL_COLOR, 3);
         }
+    }
+
+    // Today's fitness over fatigue, in their lines' colours, on a black
+    // panel laid over the oldest days of the chart: the least informative
+    // stretch of the curve, which keeps the chart its full width.
+    hidden function drawLoadKey(dc as Dc, x0 as Number, y0 as Number,
+            y1 as Number, fit as String, fat as String) as Void {
+        var f = Graphics.FONT_GLANCE;
+        var tw = dc.getTextWidthInPixels(fit, f);
+        var tw2 = dc.getTextWidthInPixels(fat, f);
+        if (tw2 > tw) { tw = tw2; }
+        var pad = dc.getWidth() * 2 / 100;
+        var fh = Graphics.getFontAscent(f);
+        var cy = (y0 + y1) / 2;
+        // From the glance's edge: the band strokes spill a little past x0.
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.fillRectangle(0, y0 - 2, x0 + tw + 2 * pad, y1 - y0 + 5);
+        var just = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
+        dc.setColor(CTL_COLOR, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x0 + pad, cy - fh * 6 / 10, f, fit, just);
+        dc.setColor(ATL_COLOR, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x0 + pad, cy + fh * 6 / 10, f, fat, just);
     }
 
     // Form (ctl - atl) over its own zone bands; in form space the bands run

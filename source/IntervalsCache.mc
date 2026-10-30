@@ -13,6 +13,11 @@ import Toybox.Time;
 //   w    summary: field -> most recent non-null value (+ "_date")
 //   wi   field -> day index that value came from, for 7-day expiry
 //   s    key -> array of daily values, oldest..newest, length == hist
+//
+// Data-page sparklines live under their own Storage key ("spark": key ->
+// array, the last SPARK_DAYS days ending at dn, or [] when the window holds
+// no values), so the glance, which reads "data" on every draw, never pays to
+// deserialise them. merge() returns them as "p" and save() splits them off.
 (:background)
 module IntervalsCache {
 
@@ -28,7 +33,17 @@ module IntervalsCache {
     }
 
     function save(cache as Dictionary) as Void {
+        var p = cache["p"];
+        if (p != null) {
+            cache.remove("p");
+            Storage.setValue("spark", p);
+        }
         Storage.setValue("data", cache);
+    }
+
+    function loadSpark() as Dictionary {
+        var p = Storage.getValue("spark");
+        return p instanceof Lang.Dictionary ? p : {};
     }
 
     // ---- auth failure backoff --------------------------------------------
@@ -117,36 +132,16 @@ module IntervalsCache {
             seriesKeys.add(keys[i]);
         }
 
+        // A key can move between the chart and sparkline stores as the user
+        // reconfigures pages; its history comes along from either.
+        var oldP = loadSpark();
+
         var s = {};
         for (var k = 0; k < seriesKeys.size(); k++) {
             var key = seriesKeys[k];
-            var prev = oldS[key] instanceof Lang.Array ? oldS[key] as Array : null;
-            var prevLen = prev != null ? prev.size() : 0;
-            var out = new Array<Float?>[histDays];
-            var carry = null;              // forward-fill for ctl/atl
+            var prev = oldS[key] instanceof Lang.Array ? oldS[key] : oldP[key];
             var fill = key.equals("ctl") || key.equals("atl");
-
-            for (var i = 0; i < histDays; i++) {
-                var day = dn - (histDays - 1 - i);
-                var v = null;
-
-                var rec = byDay[day];
-                if (rec != null) {
-                    v = IntervalsApi.extractValue(rec, key);
-                }
-                if (v == null && prev != null && oldDn != null) {
-                    // Same day in the previous cache, if it held one.
-                    var pi = prevLen - 1 - (oldDn - day);
-                    if (pi >= 0 && pi < prevLen) {
-                        v = prev[pi];
-                    }
-                }
-                if (fill) {
-                    if (v == null) { v = carry; }
-                    else { carry = v; }
-                }
-                out[i] = v;
-            }
+            var out = buildSeries(key, prev, oldDn, dn, byDay, histDays, fill);
 
             // ctl/atl must never be null (the charts assume numbers); fill any
             // leading gap with the first known value, or zero for a cold cache.
@@ -163,11 +158,38 @@ module IntervalsCache {
             s[key] = out;
         }
 
+        var sparkKeys = IntervalsApi.selectedSparkKeys();
+        var sparkLen = histDays < IntervalsApi.SPARK_DAYS
+            ? histDays : IntervalsApi.SPARK_DAYS;
+        var p = {};
+        for (var k = 0; k < sparkKeys.size(); k++) {
+            var key = sparkKeys[k];
+            var prev = oldP[key] instanceof Lang.Array ? oldP[key] : oldS[key];
+            var out = buildSeries(key, prev, oldDn, dn, byDay, sparkLen, false);
+            // A metric the athlete never logs costs one empty array, which
+            // still marks the key as fetched so it isn't refetched forever.
+            var any = false;
+            for (var i = 0; i < sparkLen && !any; i++) {
+                any = out[i] != null;
+            }
+            p[key] = any ? out : [];
+        }
+
         // Summary: newest non-null value per field, with the day it came from
         // so it can expire after SUMMARY_DAYS.
         var w = old["w"] instanceof Lang.Dictionary ? old["w"] as Dictionary : {};
         var wi = old["wi"] instanceof Lang.Dictionary ? old["wi"] as Dictionary : {};
-        var days = byDay.keys();
+        // Only days young enough to survive expire() can contribute, and
+        // skipping the rest matters: a 60- or 90-day fetch walked field by
+        // field, plus a quadratic sort of its days, tripped the watchdog on
+        // MIP watches before this pass ever finished.
+        var days = [];
+        var all = byDay.keys();
+        for (var d = 0; d < all.size(); d++) {
+            if (today - (all[d] as Number) < SUMMARY_DAYS) {
+                days.add(all[d]);
+            }
+        }
         days = sortAsc(days);
         for (var d = 0; d < days.size(); d++) {
             var day = days[d] as Number;
@@ -197,8 +219,41 @@ module IntervalsCache {
             "dn" => dn,
             "w" => w,
             "wi" => wi,
-            "s" => s
+            "s" => s,
+            "p" => p
         };
+    }
+
+    // One key's daily values for the `len` days ending at dn: fresh records
+    // first, then the same day from the previous array, forward-filled when
+    // `fill` (ctl/atl only).
+    function buildSeries(key as String, prev, oldDn as Number?, dn as Number,
+            byDay as Dictionary, len as Number, fill as Boolean) as Array {
+        var prevLen = prev instanceof Lang.Array ? prev.size() : 0;
+        var out = new Array<Float?>[len];
+        var carry = null;
+        for (var i = 0; i < len; i++) {
+            var day = dn - (len - 1 - i);
+            var v = null;
+
+            var rec = byDay[day];
+            if (rec != null) {
+                v = IntervalsApi.extractValue(rec, key);
+            }
+            if (v == null && prevLen > 0 && oldDn != null) {
+                // Same day in the previous cache, if it held one.
+                var pi = prevLen - 1 - (oldDn - day);
+                if (pi >= 0 && pi < prevLen) {
+                    v = (prev as Array)[pi];
+                }
+            }
+            if (fill) {
+                if (v == null) { v = carry; }
+                else { carry = v; }
+            }
+            out[i] = v;
+        }
+        return out;
     }
 
     // Drop tile values that have aged out of the summary window.

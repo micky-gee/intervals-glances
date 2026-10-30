@@ -1,5 +1,58 @@
 # Changelog
 
+## v0.12.0 — 2026-10-30
+
+**Data pages redrawn as sparkline tables.** Recovery, sleep, body, fuel and
+how-you-feel used to be grids of number tiles with 25px labels, and on most
+accounts half the tiles read `--`. Each page is now a table, one row per
+metric: the name and unit, a 30-day sparkline, and today's value, large, on the
+right. The sparkline shows the metric's normal range (its 30-day mean ± one
+standard deviation) as a grey band with the latest reading as a coloured dot, so
+whether today is unusual is visible at a glance, not just what today is. All
+rows share one time axis, so a bad night lines up with the HRV dip below it.
+The 1-4 scales (sleep quality and the how-you-feel entries) draw a bar per day,
+taller and warmer the worse the day. Metrics with nothing logged in 30 days are
+left out instead of shown as dashes, and the rows that remain grow to fill the
+page, up to four per page. Labels on a page share one size and values another,
+so the rows read as a table. A page with a single metric shows it large, with
+its sparkline across the screen and its 30-day range; if the metric has not
+changed in that time, just the name and value.
+
+The form page keeps its big form number and zone, with fitness and fatigue
+below as sparkline rows; ramp rate annotates the fitness row. The status page
+is a two-column list.
+
+**Bigger text everywhere.** No text is smaller than 28px on a 454px watch
+(about 6% of the screen width on every model), against 15-25px before: page
+headers, row labels, the centre readouts of the round charts, chart axis
+labels, the zoom and link prompts. The round-chart centres (window, range)
+are set larger still. The round charts themselves are unchanged.
+
+**Polar load page: fitness, form, fatigue in one row.** Fitness and fatigue
+now flank the form value at the same size, each in its curve's colour, in place
+of the small "Fit 48 / Fat 47" line underneath. The colour is the label.
+
+**Smooth zone bands.** The form-zone bands behind the load charts had a
+sawtooth edge, most visible on the green band of the polar chart. Each band
+was painted as thick overlapping strokes, and each stroke's lower zones covered
+the edge of its neighbour's upper ones. Each zone is now a filled polygon traced
+along its true edge, which also takes the polar chart from up to ~800 strokes to
+about 30 fills per frame.
+
+**Fitness and fatigue on the glance.** In the default fit+fat+form mode the
+glance now shows today's fitness and fatigue, in their lines' colours, over the
+oldest days of its chart, with form in the header as before.
+
+**Fixed: zooming past 30 days could crash MIP watches.** The 60-day history
+backfill that a zoom past 30 days triggers tripped the Connect IQ watchdog on a
+Forerunner 255 while merging, because the summary pass walked every field of
+every fetched day and sorted them all. Only the last seven days can contribute
+to it, so it now looks at no more. The crash is in v0.11.12.
+
+The sparklines need a short history of the data-page metrics, so the first sync
+after updating fetches the last 30 days once (one request). That history is
+kept apart from the glance's cache, so the glance loads no more than before.
+
 ## v0.11.12 — 2026-09-19
 
 **Fitness, fatigue and form on your watch face.** The app publishes a

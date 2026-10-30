@@ -25,10 +25,10 @@ More: [eFTP](docs/screenshots/05-eftp-ring.png) ·
 ## Features
 
 - **Glance** — a compact banded CTL/ATL chart (the form-zone colors at a
-  glance) with the current form value and data age, right in the widget
-  carousel.
-- **Form page** — big TSB value with zone label, plus Fitness / Fatigue /
-  Ramp rate.
+  glance) with today's fitness and fatigue keyed in the line colors, the
+  current form value and data age, right in the widget carousel.
+- **Form page** — big TSB value with zone label, plus Fitness and Fatigue as
+  sparkline rows, annotated with the ramp rate.
 - **Polar load chart** — CTL and ATL wrapped around the bezel over the
   time-varying form-zone bands (transition / fresh / grey / optimal /
   high-risk), computed per angle step from interpolated CTL. The display
@@ -46,9 +46,11 @@ More: [eFTP](docs/screenshots/05-eftp-ring.png) ·
   instantly from cached data (works offline). Narrow windows render as
   smooth interpolated curves.
 - **Four configurable data pages** — form, recovery, sleep, body, fuel,
-  subjective wellness or status, rendered as a modern tile grid with vector
-  fonts auto-fitted to their space (no clipped or colliding text on the
-  round display).
+  subjective wellness or status. Each metric is a row of a sparkline table:
+  name and unit, a 30-day sparkline over its normal range (mean ± 1 SD) with
+  the latest reading marked, and today's value. Rows share a time axis;
+  1-4 scales draw as severity-colored daily bars; metrics with nothing logged
+  are left out so the rest can be large.
 - **Status page** — last sync, athlete, auth method, errors.
 - **Watch-face complication** — a single complication, "Intervals data",
   carrying fitness/fatigue/form as one string (`31/15/+16`), for any watch

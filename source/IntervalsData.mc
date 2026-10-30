@@ -212,8 +212,10 @@ module IntervalsData {
         if (secs == null) {
             return "--";
         }
-        var h = secs / 3600;
-        var m = (secs % 3600) / 60;
+        // History series may hold the seconds as floats.
+        var t = secs.toNumber();
+        var h = t / 3600;
+        var m = (t % 3600) / 60;
         return h.format("%d") + "h" + m.format("%02d");
     }
 

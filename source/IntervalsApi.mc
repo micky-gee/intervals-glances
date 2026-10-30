@@ -90,6 +90,55 @@ module IntervalsApi {
         return keys;
     }
 
+    // ---- data-page sparklines ---------------------------------------------
+    // Each data page is a table of metrics, each row with a short history.
+    // The window matches INITIAL_HIST so a cold cache fills it in one fetch.
+    const SPARK_DAYS = 30;
+
+    // Metric keys shown on a data page, in priority order: a page shows the
+    // first rows that have data, so the rarely-logged ones go last. The
+    // view's row decoration (IntervalsWidgetView.rowFor) is keyed by these.
+    function pageKeys(type as String) as Array<String> {
+        if (type.equals("recovery")) {
+            return ["restingHR", "hrv", "avgSleepingHR", "readiness",
+                "hrvSDNN", "baevskySI"] as Array<String>;
+        }
+        if (type.equals("sleep")) {
+            return ["sleepSecs", "sleepScore", "sleepQuality", "respiration",
+                "spO2"] as Array<String>;
+        }
+        if (type.equals("body")) {
+            return ["weight", "bodyFat", "vo2max", "systolic",
+                "bloodGlucose"] as Array<String>;
+        }
+        if (type.equals("fuel")) {
+            return ["steps", "kcalConsumed", "carbohydrates", "protein",
+                "fatTotal", "hydrationVolume"] as Array<String>;
+        }
+        if (type.equals("feel")) {
+            return ["fatigue", "soreness", "stress", "mood", "motivation",
+                "injury"] as Array<String>;
+        }
+        return [] as Array<String>;
+    }
+
+    // Sparkline keys for the configured data pages, deduplicated and
+    // excluding anything already kept as a chart series.
+    function selectedSparkKeys() as Array {
+        var charts = selectedChartKeys();
+        var keys = [];
+        for (var i = 1; i <= IntervalsSettings.DATA_PAGES; i++) {
+            var page = pageKeys(IntervalsSettings.dataType(i));
+            for (var j = 0; j < page.size(); j++) {
+                var k = page[j];
+                if (keys.indexOf(k) < 0 && charts.indexOf(k) < 0) {
+                    keys.add(k);
+                }
+            }
+        }
+        return keys;
+    }
+
     // Some chart keys are derived rather than raw wellness fields.
     function chartSourceField(key as String) as String {
         if (key.equals("sleepHours")) {
